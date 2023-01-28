@@ -31,7 +31,7 @@ function getExistingConfigsInDirectory(dir) {
 }
 
 function directoryHasPackageJson(dir) {
-	return fs.readdirSync(dir).filter((file) => file === 'package.json').length !== 0;
+	return fs.readdirSync(dir).some((file) => file === 'package.json');
 }
 
 function getInstallCommand(pkgManager) {
@@ -69,14 +69,14 @@ export async function main() {
 
 	if (existingConfigs.length > 0) {
 		console.error(
-			chalk.red(`The ${existingConfigs} config(s) already exist. Remove them and then try again.`),
+			chalk.red(`The ${existingConfigs.join(', ')} config(s) already exist. Remove them and then try again.`),
 		);
 		process.exit(1);
 	}
 
 	if (!directoryHasPackageJson(cwd)) {
 		console.error(
-			chalk.red(`The package.json was not found. Run ${pkgManager} init and then try again.`),
+			chalk.red(`The package.json was not found. Run "${pkgManager} init" and then try again.`),
 		);
 		process.exit(1);
 	}
