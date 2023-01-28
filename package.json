@@ -2,6 +2,18 @@
   "name": "stylelint-create",
   "version": "0.0.1",
   "description": "Initialization wizard for Stylelint, a linter that helps you avoid errors and enforce conventions in your styles.",
+  "keywords": [
+    "css-in-js",
+    "css",
+    "less",
+    "lint",
+    "linter",
+    "markdown",
+    "sass",
+    "scss",
+    "stylelint",
+    "sugarss"
+  ],
   "homepage": "https://github.com/stylelint/stylelint-create#readme",
   "bugs": {
     "url": "https://github.com/stylelint/stylelint-create/issues"
@@ -9,6 +21,10 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stylelint/stylelint-create.git"
+  },
+  "funding": {
+    "type": "opencollective",
+    "url": "https://opencollective.com/stylelint"
   },
   "license": "MIT",
   "author": "stylelint",
@@ -22,6 +38,7 @@
     "lint:formatting": "prettier . --check --cache",
     "lint:js": "eslint . --cache --max-warnings=0 --ext .js,.mjs",
     "lint:md": "remark . --quiet --frail",
+    "lint:packagejson": "npmPkgJsonLint .",
     "test": "vitest"
   },
   "prettier": "@stylelint/prettier-config",
@@ -30,6 +47,9 @@
       "stylelint"
     ],
     "root": true
+  },
+  "npmpackagejsonlint": {
+    "extends": "@stylelint/npm-package-json-lint-config"
   },
   "remarkConfig": {
     "plugins": [
@@ -43,6 +63,7 @@
     "which-pm-runs": "^1.1.0"
   },
   "devDependencies": {
+    "@stylelint/npm-package-json-lint-config": "^2.0.0",
     "@stylelint/prettier-config": "^2.0.0",
     "@stylelint/remark-preset": "^4.0.0",
     "eslint": "^8.28.0",
