@@ -18,25 +18,17 @@
   },
   "scripts": {
     "format": "prettier . --write --cache",
-    "jest": "jest",
     "lint": "npm-run-all --parallel --continue-on-error lint:*",
     "lint:formatting": "prettier . --check --cache",
     "lint:js": "eslint . --cache --max-warnings=0 --ext .js,.mjs",
     "lint:md": "remark . --quiet --frail",
-    "test": "vitest",
-    "watch": "vitest"
+    "test": "vitest"
   },
   "prettier": "@stylelint/prettier-config",
   "eslintConfig": {
     "extends": [
       "stylelint"
     ],
-    "globals": {
-      "__dirname": true,
-      "module": true,
-      "require": true,
-      "testRule": true
-    },
     "root": true
   },
   "remarkConfig": {
