@@ -69,7 +69,11 @@ export async function main() {
 
 	if (existingConfigs.length > 0) {
 		console.error(
-			chalk.red(`The ${existingConfigs.join(', ')} config(s) already exist. Remove them and then try again.`),
+			chalk.red(
+				`The ${existingConfigs.join(
+					', ',
+				)} config(s) already exist. Remove them and then try again.`,
+			),
 		);
 		process.exit(1);
 	}
