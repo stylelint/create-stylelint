@@ -16,8 +16,6 @@ Coming soon!
 
 Commits to `main` will be tested by [GitHub Actions](https://github.com/stylelint/create-stylelint/actions)
 
-## License
-
-This repository is licensed under the MIT License.
+## Acknowledgements
 
 The development of this project is heavily inspired by [create-astro](https://github.com/withastro/astro/blob/main/packages/create-astro); thank you to the Astro team!
