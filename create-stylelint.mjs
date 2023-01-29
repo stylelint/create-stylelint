@@ -4,12 +4,19 @@
 'use strict';
 
 const currentVersion = process.versions.node;
-const requiredMajorVersion = parseInt(currentVersion.split('.')[0], 10);
-const minimumMajorVersion = 14;
 
-if (requiredMajorVersion < minimumMajorVersion) {
+import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import path from 'node:path';
+// eslint-disable-next-line node/no-unpublished-import
+import semver from 'semver';
+
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(fs.readFileSync(path.join(dirname, 'package.json').toString()));
+
+if (!semver.satisfies(currentVersion, pkg.engines.node)) {
 	console.error(`Node.js v${currentVersion} is out of date and unsupported!`);
-	console.error(`Please use Node.js v${minimumMajorVersion} or higher.`);
+	console.error(`Please use a Node.js version within "${pkg.engines.node}".`);
 	process.exit(1);
 }
 
