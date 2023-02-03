@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 
 const inputs = {
+	noPackageJson: 'test/fixtures/no-package-json',
 	stylelintConfigExists: 'test/fixtures/stylelint-config-exists',
 };
 
@@ -22,6 +23,14 @@ describe('stylelint-create', () => {
 
 		expect(() => setup(inputs.stylelintConfigExists, projectRoot)).toThrowError(
 			/config\(s\) already exist/,
+		);
+	});
+
+	it('should not proceed if no package.json exists', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.noPackageJson, projectRoot)).toThrowError(
+			/The package.json was not found./,
 		);
 	});
 });
