@@ -1,7 +1,7 @@
 /* eslint-disable no-process-exit */
 /* eslint no-console: 'off' */
 
-import chalk from 'chalk';
+import picocolors from 'picocolors';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
 import fs from 'fs';
@@ -23,7 +23,7 @@ const NEXT_STEPS_STRING = `
 You can now lint your CSS files using:
 npx stylelint "**/*.css"
 
-${chalk.dim(`We recommend customizing Stylelint:
+${picocolors.dim(`We recommend customizing Stylelint:
 https://stylelint.io/user-guide/customize/`)}
 `;
 
@@ -50,15 +50,17 @@ async function installPackages(cwd, pkgManager) {
 
 	await new Promise((resolve, reject) => {
 		installExec.stdout?.on('data', (data) => {
-			installSpinner.text = `${installingPackagesMsg}\n${chalk.bold(`[${pkgManager}]`)} ${data}`;
+			installSpinner.text = `${installingPackagesMsg}\n${picocolors.bold(
+				`[${pkgManager}]`,
+			)} ${data}`;
 		});
 		installExec.on('error', (error) => {
-			console.error(chalk.red(`Failed to install packages: ${error}`));
+			console.error(picocolors.red(`Failed to install packages: ${error}`));
 			reject(error);
 		});
 		installExec.on('close', () => resolve());
 	});
-	installSpinner.text = chalk.green('Installed packages.');
+	installSpinner.text = picocolors.green('Installed packages.');
 	installSpinner.succeed();
 }
 
@@ -70,7 +72,7 @@ export async function main() {
 
 	if (existingConfigs.length > 0) {
 		console.error(
-			chalk.red(
+			picocolors.red(
 				`The ${existingConfigs.join(
 					', ',
 				)} config(s) already exist. Remove them and then try again.`,
@@ -81,17 +83,19 @@ export async function main() {
 
 	if (!directoryHasPackageJson(cwd)) {
 		console.error(
-			chalk.red(`The package.json was not found. Run "${pkgManager} init" and then try again.`),
+			picocolors.red(
+				`The package.json was not found. Run "${pkgManager} init" and then try again.`,
+			),
 		);
 		process.exit(1);
 	}
 
 	fs.writeFileSync(DEFAULT_CONFIG_FILE, '{ "extends": ["stylelint-config-standard"] }');
-	console.log(chalk.green(`Created ${DEFAULT_CONFIG_FILE}.`));
+	console.log(picocolors.green(`Created ${DEFAULT_CONFIG_FILE}.`));
 
 	await installPackages(cwd, pkgManager);
 
-	console.log(chalk.green('Stylelint has been fully configured.'));
+	console.log(picocolors.green('Stylelint has been fully configured.'));
 
 	console.log(NEXT_STEPS_STRING);
 }
