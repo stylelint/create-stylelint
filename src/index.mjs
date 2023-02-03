@@ -20,9 +20,10 @@ const STYLELINT_CONFIG_PATHS = new Set([
 ]);
 
 const NEXT_STEPS_STRING = `
-You can now lint your CSS files using: npx stylelint "**/*.css"
+You can now lint your CSS files using:
+npx stylelint "**/*.css"
 
-${chalk.dim(`Now that you're up and running, you'll likely want to customize Stylelint to your needs by following our guide:
+${chalk.dim(`We recommend customizing Stylelint:
 https://stylelint.io/user-guide/customize/`)}
 `;
 
@@ -52,12 +53,12 @@ async function installPackages(cwd, pkgManager) {
 			installSpinner.text = `${installingPackagesMsg}\n${chalk.bold(`[${pkgManager}]`)} ${data}`;
 		});
 		installExec.on('error', (error) => {
-			console.error(chalk.red(`Error installing packages: ${error}`));
+			console.error(chalk.red(`Failed to install packages: ${error}`));
 			reject(error);
 		});
 		installExec.on('close', () => resolve());
 	});
-	installSpinner.text = chalk.green('Packages installed.');
+	installSpinner.text = chalk.green('Installed packages.');
 	installSpinner.succeed();
 }
 

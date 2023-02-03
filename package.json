@@ -1,27 +1,12 @@
 {
   "name": "stylelint-create",
   "version": "0.0.1",
-  "description": "Initialization wizard for Stylelint, a linter that helps you avoid errors and enforce conventions in your styles.",
+  "description": "The npm init script for Stylelint.",
   "keywords": [
-    "css-in-js",
-    "css",
-    "less",
-    "lint",
-    "linter",
-    "markdown",
-    "sass",
-    "scss",
     "stylelint",
-    "sugarss"
+    "npm init"
   ],
-  "homepage": "https://github.com/stylelint/stylelint-create#readme",
-  "bugs": {
-    "url": "https://github.com/stylelint/stylelint-create/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/stylelint/stylelint-create.git"
-  },
+  "repository": "stylelint/create-stylelint",
   "funding": {
     "type": "opencollective",
     "url": "https://opencollective.com/stylelint"

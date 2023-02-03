@@ -15,8 +15,8 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(fs.readFileSync(path.join(dirname, 'package.json').toString()));
 
 if (!semver.satisfies(currentVersion, pkg.engines.node)) {
-	console.error(`Node.js v${currentVersion} is out of date and unsupported!`);
-	console.error(`Please use a Node.js version within "${pkg.engines.node}".`);
+	console.error(`Unsupported Node.js version (v${currentVersion})`);
+	console.error(`Install a Node.js version within "${pkg.engines.node}" and then try again.`);
 	process.exit(1);
 }
 
