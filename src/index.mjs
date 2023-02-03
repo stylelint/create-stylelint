@@ -11,6 +11,7 @@ const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
 
 const STYLELINT_CONFIG_PATHS = new Set([
 	'.stylelintrc',
+	'.stylelintrc.cjs',
 	'.stylelintrc.json',
 	'.stylelintrc.yaml',
 	'.stylelintrc.yml',
