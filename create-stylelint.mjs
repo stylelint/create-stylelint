@@ -8,7 +8,6 @@ const currentVersion = process.versions.node;
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
-// eslint-disable-next-line node/no-unpublished-import
 import semver from 'semver';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));

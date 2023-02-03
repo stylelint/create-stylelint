@@ -1,11 +1,11 @@
 /* eslint-disable no-process-exit */
 /* eslint no-console: 'off' */
 
-import picocolors from 'picocolors';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
 import fs from 'fs';
 import ora from 'ora';
+import picocolors from 'picocolors';
 
 const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
 

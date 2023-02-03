@@ -28,6 +28,11 @@
   },
   "prettier": "@stylelint/prettier-config",
   "eslintConfig": {
+    "settings": {
+      "jest": {
+        "version": "latest"
+      }
+    },
     "extends": [
       "stylelint"
     ],
@@ -45,6 +50,7 @@
     "execa": "^6.1.0",
     "ora": "^6.1.2",
     "picocolors": "^1.0.0",
+    "semver": "^7.3.8",
     "which-pm-runs": "^1.1.0"
   },
   "devDependencies": {
@@ -55,17 +61,11 @@
     "eslint-config-stylelint": "^17.1.0",
     "npm-run-all": "^4.1.5",
     "remark-cli": "^11.0.0",
-    "semver": "^7.3.8",
     "stylelint": "^14.16.1",
     "stylelint-config-standard": "^29.0.0",
     "vitest": "^0.28.1"
   },
   "engines": {
     "node": "^14.13.1 || >=16.0.0 || >=18.0.0"
-  },
-  "settings": {
-    "jest": {
-      "version": "latest"
-    }
   }
 }
