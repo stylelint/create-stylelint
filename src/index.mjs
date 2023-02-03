@@ -28,18 +28,31 @@ ${picocolors.dim(`We recommend customizing Stylelint:
 https://stylelint.io/user-guide/customize/`)}
 `;
 
+/**
+ * @param {fs.PathLike} dir
+ */
 function getExistingConfigsInDirectory(dir) {
 	return fs.readdirSync(dir).filter((file) => STYLELINT_CONFIG_PATHS.has(file));
 }
 
+/**
+ * @param {fs.PathLike} dir
+ */
 function directoryHasPackageJson(dir) {
 	return fs.readdirSync(dir).some((file) => file === 'package.json');
 }
 
+/**
+ * @param {string} pkgManager
+ */
 function getInstallCommand(pkgManager) {
 	return pkgManager === 'npm' ? 'install' : 'add';
 }
 
+/**
+ * @param {string} cwd
+ * @param {string} pkgManager
+ */
 async function installPackages(cwd, pkgManager) {
 	const installExec = execa(
 		pkgManager,
@@ -49,18 +62,20 @@ async function installPackages(cwd, pkgManager) {
 	const installingPackagesMsg = `Installing packages...`;
 	const installSpinner = ora(installingPackagesMsg).start();
 
-	await new Promise((resolve, reject) => {
-		installExec.stdout?.on('data', (data) => {
-			installSpinner.text = `${installingPackagesMsg}\n${picocolors.bold(
-				`[${pkgManager}]`,
-			)} ${data}`;
-		});
-		installExec.on('error', (error) => {
-			console.error(picocolors.red(`Failed to install packages: ${error}`));
-			reject(error);
-		});
-		installExec.on('close', () => resolve());
-	});
+	await /** @type {Promise<void>} */ (
+		new Promise((resolve, reject) => {
+			installExec.stdout?.on('data', (data) => {
+				installSpinner.text = `${installingPackagesMsg}\n${picocolors.bold(
+					`[${pkgManager}]`,
+				)} ${data}`;
+			});
+			installExec.on('error', (error) => {
+				console.error(picocolors.red(`Failed to install packages: ${error}`));
+				reject(error);
+			});
+			installExec.on('close', () => resolve());
+		})
+	);
 	installSpinner.text = picocolors.green('Installed packages.');
 	installSpinner.succeed();
 }
