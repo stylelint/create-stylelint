@@ -111,7 +111,5 @@ export async function main() {
 
 	await installPackages(cwd, pkgManager);
 
-	console.log(picocolors.green('Stylelint has been fully configured.'));
-
 	console.log(NEXT_STEPS_STRING);
 }
