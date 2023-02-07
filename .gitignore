@@ -1,0 +1,9 @@
+*~
+*[._]sw[g-p]
+.eslintcache
+
+node_modules/
+.idea/
+.vscode/
+*.log
+.DS_Store
