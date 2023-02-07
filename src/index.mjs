@@ -6,6 +6,7 @@ import { execa } from 'execa';
 import fs from 'fs';
 import ora from 'ora';
 import picocolors from 'picocolors';
+import stripIndent from 'strip-indent';
 
 const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
 
@@ -19,14 +20,6 @@ const STYLELINT_CONFIG_PATHS = new Set([
 	'stylelint.config.js',
 	'stylelint.config.cjs',
 ]);
-
-const NEXT_STEPS_STRING = `
-You can now lint your CSS files using:
-npx stylelint "**/*.css"
-
-${picocolors.dim(`We recommend customizing Stylelint:
-https://stylelint.io/user-guide/customize/`)}
-`;
 
 /**
  * @param {fs.PathLike} dir
@@ -53,63 +46,74 @@ function getInstallCommand(pkgManager) {
  * @param {string} cwd
  * @param {string} pkgManager
  */
-async function installPackages(cwd, pkgManager) {
-	const installExec = execa(
-		pkgManager,
-		[`${getInstallCommand(pkgManager)}`, '-D', 'stylelint', 'stylelint-config-standard'],
-		{ cwd },
-	);
-	const installingPackagesMsg = `Installing packages...`;
-	const installSpinner = ora(installingPackagesMsg).start();
-
-	await /** @type {Promise<void>} */ (
-		new Promise((resolve, reject) => {
-			installExec.stdout?.on('data', (data) => {
-				installSpinner.text = `${installingPackagesMsg}\n${picocolors.bold(
-					`[${pkgManager}]`,
-				)} ${data}`;
-			});
-			installExec.on('error', (error) => {
-				console.error(picocolors.red(`Failed to install packages: ${error}`));
-				reject(error);
-			});
-			installExec.on('close', () => resolve());
-		})
-	);
-	installSpinner.text = picocolors.green('Installed packages.');
-	installSpinner.succeed();
-}
-
-export async function main() {
-	const pkgManager = detectPackageManager()?.name || 'npm';
-	const cwd = './';
-
+function createConfig(cwd, pkgManager) {
+	const spinner = ora('Creating config...').start();
 	const existingConfigs = getExistingConfigsInDirectory(cwd);
 
 	if (existingConfigs.length > 0) {
-		console.error(
-			picocolors.red(
-				`The ${existingConfigs.join(
-					', ',
-				)} config(s) already exist. Remove them and then try again.`,
-			),
+		spinner.fail(
+			`Failed to create config:\nThe ${existingConfigs.join(
+				', ',
+			)} config(s) already exist. Remove them and then try again.`,
 		);
 		process.exit(1);
 	}
 
 	if (!directoryHasPackageJson(cwd)) {
-		console.error(
-			picocolors.red(
-				`The package.json was not found. Run "${pkgManager} init" and then try again.`,
-			),
+		spinner.fail(
+			`Failed to create config:\npackage.json was not found. Run "${pkgManager} init" and then try again.`,
 		);
 		process.exit(1);
 	}
 
-	fs.writeFileSync(DEFAULT_CONFIG_FILE, '{ "extends": ["stylelint-config-standard"] }');
-	console.log(picocolors.green(`Created ${DEFAULT_CONFIG_FILE}.`));
+	try {
+		fs.writeFileSync(DEFAULT_CONFIG_FILE, '{ "extends": ["stylelint-config-standard"] }');
+	} catch (error) {
+		spinner.fail(`Failed to create config:\n${error}`);
+		process.exit(1);
+	}
 
+	spinner.succeed(`Created ${DEFAULT_CONFIG_FILE}.`);
+}
+
+/**
+ * @param {string} cwd
+ * @param {string} pkgManager
+ */
+async function installPackages(cwd, pkgManager) {
+	const spinner = ora('Installing packages...').start();
+
+	try {
+		await execa(
+			pkgManager,
+			[`${getInstallCommand(pkgManager)}`, '-D', 'stylelint', 'stylelint-config-standard'],
+			{ cwd },
+		);
+	} catch (error) {
+		spinner.fail(`Failed to install packages:\n${error}`);
+		process.exit(1);
+	}
+
+	spinner.succeed('Installed packages.');
+}
+
+function showNextSteps() {
+	console.log(
+		stripIndent(`
+			${picocolors.green(`You can now lint your CSS files using:
+			npx stylelint "**/*.css"`)}
+			
+			${picocolors.dim(`We recommend customizing Stylelint:
+			https://stylelint.io/user-guide/customize/`)}
+		`),
+	);
+}
+
+export async function main() {
+	const pkgManager = detectPackageManager()?.name ?? 'npm';
+	const cwd = './';
+
+	createConfig(cwd, pkgManager);
 	await installPackages(cwd, pkgManager);
-
-	console.log(NEXT_STEPS_STRING);
+	showNextSteps();
 }

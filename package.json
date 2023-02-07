@@ -52,6 +52,7 @@
     "ora": "^6.1.2",
     "picocolors": "^1.0.0",
     "semver": "^7.3.8",
+    "strip-indent": "^4.0.0",
     "which-pm-runs": "^1.1.0"
   },
   "devDependencies": {
