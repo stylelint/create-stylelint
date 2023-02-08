@@ -30,7 +30,7 @@ describe('stylelint-create', () => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(() => setup(inputs.noPackageJson, projectRoot)).toThrowError(
-			/The package.json was not found./,
+			/package.json was not found./,
 		);
 	});
 });
