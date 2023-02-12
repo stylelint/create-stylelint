@@ -1,8 +1,9 @@
 // eslint-disable-next-line node/no-unpublished-import
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 
 const inputs = {
+	failNpmInstall: 'test/fixtures/fail-npm-install',
 	noPackageJson: 'test/fixtures/no-package-json',
 	stylelintConfigExists: 'test/fixtures/stylelint-config-exists',
 	validEnv: 'test/fixtures/valid-env',
@@ -19,7 +20,7 @@ function setup(pathToTest, projectRoot, args = []) {
 }
 
 function cleanupGenFiles() {
-	const pathsToCleanup = [inputs.validEnv];
+	const pathsToCleanup = [inputs.failNpmInstall, inputs.validEnv];
 
 	for (let pathToTest of pathsToCleanup) {
 		execFileSync('./reset-state.sh', [], {
@@ -28,8 +29,6 @@ function cleanupGenFiles() {
 		});
 	}
 }
-
-vi.mock('execa');
 
 describe('stylelint-create', () => {
 	afterEach(() => {
@@ -55,6 +54,14 @@ describe('stylelint-create', () => {
 
 		expect(() => setup(inputs.noPackageJson, projectRoot)).toThrowError(
 			/package.json was not found./,
+		);
+	});
+
+	it('should error if npm install fails', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.failNpmInstall, projectRoot)).toThrowError(
+			/Failed to install packages/,
 		);
 	});
 });
