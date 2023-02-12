@@ -1,10 +1,11 @@
 // eslint-disable-next-line node/no-unpublished-import
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { execFileSync } from 'node:child_process';
 
 const inputs = {
 	noPackageJson: 'test/fixtures/no-package-json',
 	stylelintConfigExists: 'test/fixtures/stylelint-config-exists',
+	validEnv: 'test/fixtures/valid-env',
 };
 
 function getProjectRoot(context) {
@@ -17,7 +18,30 @@ function setup(pathToTest, projectRoot, args = []) {
 	});
 }
 
+function cleanupGenFiles() {
+	const pathsToCleanup = [inputs.validEnv];
+
+	for (let pathToTest of pathsToCleanup) {
+		execFileSync('./reset-state.sh', [], {
+			// eslint-disable-next-line no-undef
+			cwd: `${__dirname}/../${pathToTest}`,
+		});
+	}
+}
+
+vi.mock('execa');
+
 describe('stylelint-create', () => {
+	afterEach(() => {
+		cleanupGenFiles();
+	});
+
+	it('should succeed in a valid env', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(setup(inputs.validEnv, projectRoot)).toMatch(/You can now lint your CSS files using/);
+	});
+
 	it('should not proceed if a Stylelint config already exists in the directory', (context) => {
 		const projectRoot = getProjectRoot(context);
 
