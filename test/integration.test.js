@@ -23,7 +23,7 @@ function cleanupGenFiles() {
 	const pathsToCleanup = [inputs.failNpmInstall, inputs.validEnv];
 
 	for (let pathToTest of pathsToCleanup) {
-		execFileSync('./reset-state.sh', [], {
+		execFileSync('sh', ['reset-state.sh'], {
 			// eslint-disable-next-line no-undef
 			cwd: `${__dirname}/../${pathToTest}`,
 		});
