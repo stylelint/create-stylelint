@@ -1,5 +1,7 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 // eslint-disable-next-line node/no-unpublished-import
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
 
 const inputs = {
@@ -19,20 +21,39 @@ function setup(pathToTest, projectRoot, args = []) {
 	});
 }
 
-function cleanupGenFiles() {
+function backupFiles(root) {
+	const pathsToBackup = [inputs.failNpmInstall, inputs.validEnv];
+
+	for (const pathToTest of pathsToBackup) {
+		fs.copyFileSync(
+			path.join(root, pathToTest, 'package.json'),
+			path.join(root, pathToTest, 'package.json.bak'),
+		);
+	}
+}
+
+function cleanupGenFiles(root) {
 	const pathsToCleanup = [inputs.failNpmInstall, inputs.validEnv];
 
-	for (let pathToTest of pathsToCleanup) {
-		execFileSync('sh', ['reset-state.sh'], {
-			// eslint-disable-next-line no-undef
-			cwd: `${__dirname}/../${pathToTest}`,
-		});
+	for (const pathToTest of pathsToCleanup) {
+		for (const file of ['.stylelintrc.json', 'package-lock.json', 'node_modules']) {
+			fs.rmSync(path.join(root, pathToTest, file), { recursive: true, force: true });
+		}
+
+		fs.renameSync(
+			path.join(root, pathToTest, 'package.json.bak'),
+			path.join(root, pathToTest, 'package.json'),
+		);
 	}
 }
 
 describe('stylelint-create', () => {
-	afterEach(() => {
-		cleanupGenFiles();
+	beforeEach((context) => {
+		backupFiles(getProjectRoot(context));
+	});
+
+	afterEach((context) => {
+		cleanupGenFiles(getProjectRoot(context));
 	});
 
 	it('should succeed in a valid env', (context) => {
