@@ -102,7 +102,7 @@ function showNextSteps() {
 		stripIndent(`
 			${picocolors.green(`You can now lint your CSS files using:
 			npx stylelint "**/*.css"`)}
-			
+
 			${picocolors.dim(`We recommend customizing Stylelint:
 			https://stylelint.io/user-guide/customize/`)}
 		`),
