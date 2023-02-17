@@ -29,7 +29,8 @@
     "lint:packagejson": "npmPkgJsonLint .",
     "lint:types": "tsc",
     "pretest": "npm run lint",
-    "test": "vitest",
+    "test": "vitest run",
+    "watch": "vitest watch",
     "release": "np"
   },
   "prettier": "@stylelint/prettier-config",
