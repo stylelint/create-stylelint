@@ -12,6 +12,6 @@ Run `npm init stylelint`
 - to test locally, run `node create-stylelint.mjs`
 - to test with [Vitest](https://vitest.dev/), `npm test`
 
-## Acknowledgements
+## Acknowledgments
 
 Inspired by [create-astro](https://github.com/withastro/astro/blob/main/packages/create-astro).
