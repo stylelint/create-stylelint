@@ -17,6 +17,9 @@
   "bin": {
     "create-stylelint": "./create-stylelint.mjs"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
     "format": "prettier . --write --cache",
     "lint": "npm-run-all --parallel --continue-on-error lint:*",
