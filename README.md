@@ -1,4 +1,4 @@
-# stylelint-create
+# create-stylelint
 
 The [`npm init`](https://docs.npmjs.com/cli/v9/commands/npm-init) script for [Stylelint](https://github.com/stylelint/stylelint).
 
@@ -9,8 +9,8 @@ Run `npm init stylelint`
 ## Contributing
 
 - `npm install`
-- to test locally, run `node create-stylelint.mjs`
-- to test with [Vitest](https://vitest.dev/), `npm test`
+- `node create-stylelint.mjs` to run locally
+- `npm run watch` to test with [Vitest](https://vitest.dev/)
 
 ## Acknowledgments
 
