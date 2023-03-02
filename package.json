@@ -49,7 +49,7 @@
     ]
   },
   "dependencies": {
-    "execa": "^6.1.0",
+    "execa": "^7.0.0",
     "ora": "^6.1.2",
     "picocolors": "^1.0.0",
     "semver": "^7.3.8",
