@@ -1,6 +1,7 @@
 /* eslint-disable no-process-exit */
 /* eslint no-console: 'off' */
 
+import { cosmiconfigSync } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
 import fs from 'fs';
@@ -10,22 +11,21 @@ import stripIndent from 'strip-indent';
 
 const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
 
-const STYLELINT_CONFIG_PATHS = new Set([
-	'.stylelintrc',
-	'.stylelintrc.cjs',
-	'.stylelintrc.json',
-	'.stylelintrc.yaml',
-	'.stylelintrc.yml',
-	'.stylelintrc.js',
-	'stylelint.config.js',
-	'stylelint.config.cjs',
-]);
+// const STYLELINT_CONFIG_PATHS = new Set([
+// 	'.stylelintrc',
+// 	'.stylelintrc.cjs',
+// 	'.stylelintrc.json',
+// 	'.stylelintrc.yaml',
+// 	'.stylelintrc.yml',
+// 	'.stylelintrc.js',
+// 	'stylelint.config.js',
+// 	'stylelint.config.cjs',
+// ]);
 
-/**
- * @param {fs.PathLike} dir
- */
-function getExistingConfigsInDirectory(dir) {
-	return fs.readdirSync(dir).filter((file) => STYLELINT_CONFIG_PATHS.has(file));
+function getExistingConfigsInDirectory() {
+	const explorer = cosmiconfigSync('stylelint');
+
+	return explorer.search();
 }
 
 /**
@@ -48,13 +48,11 @@ function getInstallCommand(pkgManager) {
  */
 function createConfig(cwd, pkgManager) {
 	const spinner = ora('Creating config...').start();
-	const existingConfigs = getExistingConfigsInDirectory(cwd);
+	const existingConfigs = getExistingConfigsInDirectory();
 
-	if (existingConfigs.length > 0) {
+	if (existingConfigs !== null) {
 		spinner.fail(
-			`Failed to create config:\nThe ${existingConfigs.join(
-				', ',
-			)} config(s) already exist. Remove them and then try again.`,
+			`Failed to create config:\nThe ${existingConfigs.filepath} config(s) already exist. Remove them and then try again.`,
 		);
 		process.exit(1);
 	}

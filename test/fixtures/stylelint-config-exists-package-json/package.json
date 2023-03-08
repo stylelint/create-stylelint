@@ -1,0 +1,16 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "stylelint": {},
+  "devDependencies": {
+    "stylelint": "^14.16.1",
+    "stylelint-config-standard": "^29.0.0"
+  }
+}
