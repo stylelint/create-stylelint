@@ -13,6 +13,7 @@ const inputs = {
 	stylelintConfigExistsRcCjs: 'test/fixtures/stylelint-config-exists-rc-cjs',
 	stylelintConfigExistsRcJson: 'test/fixtures/stylelint-config-exists-rc-json',
 	stylelintConfigExistsRcYaml: 'test/fixtures/stylelint-config-exists-rc-yaml',
+	stylelintConfigExistsSubdirRcJson: 'test/fixtures/stylelint-config-exists-subdir-rc-json',
 	validEnv: 'test/fixtures/valid-env',
 };
 
@@ -91,6 +92,7 @@ describe.each([
 	{ file: '.stylelintrc.json', fixture: inputs.stylelintConfigExistsRcJson },
 	{ file: '.stylelintrc.yaml', fixture: inputs.stylelintConfigExistsRcYaml },
 	{ file: 'stylelint.config.cjs', fixture: inputs.stylelintConfigExistsConfigCjs },
+	{ file: '.config/stylelintrc.json', fixture: inputs.stylelintConfigExistsSubdirRcJson },
 ])('create-stylelint in a directory with $file', ({ file, fixture }) => {
 	beforeEach((context) => {
 		backupFiles(getProjectRoot(context));
