@@ -7,9 +7,12 @@ import { execFileSync } from 'node:child_process';
 const inputs = {
 	failNpmInstall: 'test/fixtures/fail-npm-install',
 	noPackageJson: 'test/fixtures/no-package-json',
+	stylelintConfigExistsConfigCjs: 'test/fixtures/stylelint-config-exists-config-cjs',
 	stylelintConfigExistsPackageJson: 'test/fixtures/stylelint-config-exists-package-json',
 	stylelintConfigExistsRc: 'test/fixtures/stylelint-config-exists-rc',
+	stylelintConfigExistsRcCjs: 'test/fixtures/stylelint-config-exists-rc-cjs',
 	stylelintConfigExistsRcJson: 'test/fixtures/stylelint-config-exists-rc-json',
+	stylelintConfigExistsRcYaml: 'test/fixtures/stylelint-config-exists-rc-yaml',
 	validEnv: 'test/fixtures/valid-env',
 };
 
@@ -80,10 +83,34 @@ describe('create-stylelint', () => {
 		);
 	});
 
+	it('should not proceed if a Stylelint config already exists in the directory: .stylelintrc.cjs', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.stylelintConfigExistsRcCjs, projectRoot)).toThrowError(
+			/config\(s\) already exist/,
+		);
+	});
+
 	it('should not proceed if a Stylelint config already exists in the directory: .stylelintrc.json', (context) => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(() => setup(inputs.stylelintConfigExistsRcJson, projectRoot)).toThrowError(
+			/config\(s\) already exist/,
+		);
+	});
+
+	it('should not proceed if a Stylelint config already exists in the directory: .stylelintrc.yaml', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.stylelintConfigExistsRcYaml, projectRoot)).toThrowError(
+			/config\(s\) already exist/,
+		);
+	});
+
+	it('should not proceed if a Stylelint config already exists in the directory: stylelint.config.cjs', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.stylelintConfigExistsConfigCjs, projectRoot)).toThrowError(
 			/config\(s\) already exist/,
 		);
 	});

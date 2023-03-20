@@ -11,17 +11,6 @@ import stripIndent from 'strip-indent';
 
 const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
 
-// const STYLELINT_CONFIG_PATHS = new Set([
-// 	'.stylelintrc',
-// 	'.stylelintrc.cjs',
-// 	'.stylelintrc.json',
-// 	'.stylelintrc.yaml',
-// 	'.stylelintrc.yml',
-// 	'.stylelintrc.js',
-// 	'stylelint.config.js',
-// 	'stylelint.config.cjs',
-// ]);
-
 function getExistingConfigsInDirectory() {
 	const explorer = cosmiconfigSync('stylelint');
 
