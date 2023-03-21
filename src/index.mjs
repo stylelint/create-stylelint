@@ -1,6 +1,7 @@
 /* eslint-disable no-process-exit */
 /* eslint no-console: 'off' */
 
+import * as path from 'node:path';
 import { cosmiconfigSync } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
@@ -11,7 +12,7 @@ import stripIndent from 'strip-indent';
 
 const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
 
-function getExistingConfigsInDirectory() {
+function getExistingConfigInDirectory() {
 	const explorer = cosmiconfigSync('stylelint');
 
 	return explorer.search();
@@ -37,12 +38,16 @@ function getInstallCommand(pkgManager) {
  */
 function createConfig(cwd, pkgManager) {
 	const spinner = ora('Creating config...').start();
-	const existingConfigs = getExistingConfigsInDirectory();
+	const existingConfigs = getExistingConfigInDirectory();
 
 	if (existingConfigs !== null) {
-		spinner.fail(
-			`Failed to create config:\nThe "${path.basename(existingConfigs.filepath)}" config already exists. Remove them and then try again.`,
-		);
+		const basename = path.basename(existingConfigs.filepath);
+		const failureMessage =
+			basename === 'package.json'
+				? 'The "stylelint" config in "package.json" already exists. Remove it and then try again.'
+				: `Failed to create config:\nThe "${basename}" config already exists. Remove it and then try again.`;
+
+		spinner.fail(failureMessage);
 		process.exit(1);
 	}
 
