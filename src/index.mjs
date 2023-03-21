@@ -41,7 +41,7 @@ function createConfig(cwd, pkgManager) {
 
 	if (existingConfigs !== null) {
 		spinner.fail(
-			`Failed to create config:\nThe ${existingConfigs.filepath} config(s) already exist. Remove them and then try again.`,
+			`Failed to create config:\nThe "${path.basename(existingConfigs.filepath)}" config already exists. Remove them and then try again.`,
 		);
 		process.exit(1);
 	}
