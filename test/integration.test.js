@@ -76,19 +76,19 @@ describe('create-stylelint', () => {
 		);
 	});
 
+	it('should not proceed if the stylelint field exists in package.json', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.stylelintConfigExistsPackageJson, projectRoot)).toThrowError(
+			'The "stylelint" config in "package.json" already exists.',
+		);
+	});
+
 	it('should error if npm install fails', (context) => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(() => setup(inputs.failNpmInstall, projectRoot)).toThrowError(
 			/Failed to install packages/,
-		);
-	});
-
-	it('should error if the stylelint field exists in package.json', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(() => setup(inputs.stylelintConfigExistsPackageJson, projectRoot)).toThrowError(
-			'The "stylelint" config in "package.json" already exists.',
 		);
 	});
 });
@@ -112,6 +112,6 @@ describe.each([
 	it(`should not proceed, since a stylelint configuration already exists at ${file}`, (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() => setup(fixture, projectRoot)).toThrowError('config already exist');
+		expect(() => setup(fixture, projectRoot)).toThrowError('config already exists');
 	});
 });
