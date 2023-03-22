@@ -44,10 +44,10 @@ function createConfig(cwd, pkgManager) {
 		const basename = path.basename(existingConfigs.filepath);
 		const failureMessage =
 			basename === 'package.json'
-				? 'The "stylelint" config in "package.json" already exists. Remove it and then try again.'
-				: `Failed to create config:\nThe "${basename}" config already exists. Remove it and then try again.`;
+				? 'The "stylelint" config in "package.json" already exists.'
+				: `The "${basename}" config already exists.`;
 
-		spinner.fail(failureMessage);
+		spinner.fail(`Failed to create config:\n${failureMessage} Remove it and then try again.`);
 		process.exit(1);
 	}
 
