@@ -1,11 +1,11 @@
 /* eslint-disable no-process-exit */
 /* eslint no-console: 'off' */
 
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { cosmiconfigSync } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
-import fs from 'fs';
 import ora from 'ora';
 import picocolors from 'picocolors';
 import stripIndent from 'strip-indent';
@@ -38,10 +38,10 @@ function getInstallCommand(pkgManager) {
  */
 function createConfig(cwd, pkgManager) {
 	const spinner = ora('Creating config...').start();
-	const existingConfigs = getExistingConfigInDirectory();
+	const existingConfig = getExistingConfigInDirectory();
 
-	if (existingConfigs !== null) {
-		const basename = path.basename(existingConfigs.filepath);
+	if (existingConfig !== null) {
+		const basename = path.basename(existingConfig.filepath);
 		const failureMessage =
 			basename === 'package.json'
 				? 'The "stylelint" config in "package.json" already exists.'
