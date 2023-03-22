@@ -7,7 +7,13 @@ import { execFileSync } from 'node:child_process';
 const inputs = {
 	failNpmInstall: 'test/fixtures/fail-npm-install',
 	noPackageJson: 'test/fixtures/no-package-json',
-	stylelintConfigExists: 'test/fixtures/stylelint-config-exists',
+	stylelintConfigExistsConfigCjs: 'test/fixtures/stylelint-config-exists-config-cjs',
+	stylelintConfigExistsPackageJson: 'test/fixtures/stylelint-config-exists-package-json',
+	stylelintConfigExistsRc: 'test/fixtures/stylelint-config-exists-rc',
+	stylelintConfigExistsRcCjs: 'test/fixtures/stylelint-config-exists-rc-cjs',
+	stylelintConfigExistsRcJson: 'test/fixtures/stylelint-config-exists-rc-json',
+	stylelintConfigExistsRcYaml: 'test/fixtures/stylelint-config-exists-rc-yaml',
+	stylelintConfigExistsSubdirRcJson: 'test/fixtures/stylelint-config-exists-subdir-rc-json',
 	validEnv: 'test/fixtures/valid-env',
 };
 
@@ -47,7 +53,7 @@ function cleanupGenFiles(root) {
 	}
 }
 
-describe('stylelint-create', () => {
+describe('create-stylelint', () => {
 	beforeEach((context) => {
 		backupFiles(getProjectRoot(context));
 	});
@@ -62,19 +68,19 @@ describe('stylelint-create', () => {
 		expect(setup(inputs.validEnv, projectRoot)).toMatch(/You can now lint your CSS files using/);
 	});
 
-	it('should not proceed if a Stylelint config already exists in the directory', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(() => setup(inputs.stylelintConfigExists, projectRoot)).toThrowError(
-			/config\(s\) already exist/,
-		);
-	});
-
 	it('should not proceed if no package.json exists', (context) => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(() => setup(inputs.noPackageJson, projectRoot)).toThrowError(
 			/package.json was not found./,
+		);
+	});
+
+	it('should not proceed if the stylelint field exists in package.json', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(inputs.stylelintConfigExistsPackageJson, projectRoot)).toThrowError(
+			'The "stylelint" config in "package.json" already exists.',
 		);
 	});
 
@@ -84,5 +90,28 @@ describe('stylelint-create', () => {
 		expect(() => setup(inputs.failNpmInstall, projectRoot)).toThrowError(
 			/Failed to install packages/,
 		);
+	});
+});
+
+describe.each([
+	{ file: '.stylelintrc', fixture: inputs.stylelintConfigExistsRc },
+	{ file: '.stylelintrc.cjs', fixture: inputs.stylelintConfigExistsRcCjs },
+	{ file: '.stylelintrc.json', fixture: inputs.stylelintConfigExistsRcJson },
+	{ file: '.stylelintrc.yaml', fixture: inputs.stylelintConfigExistsRcYaml },
+	{ file: 'stylelint.config.cjs', fixture: inputs.stylelintConfigExistsConfigCjs },
+	{ file: '.config/stylelintrc.json', fixture: inputs.stylelintConfigExistsSubdirRcJson },
+])('create-stylelint in a directory with $file', ({ file, fixture }) => {
+	beforeEach((context) => {
+		backupFiles(getProjectRoot(context));
+	});
+
+	afterEach((context) => {
+		cleanupGenFiles(getProjectRoot(context));
+	});
+
+	it(`should not proceed, since a stylelint configuration already exists at ${file}`, (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		expect(() => setup(fixture, projectRoot)).toThrowError('config already exists');
 	});
 });
