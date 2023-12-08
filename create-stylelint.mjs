@@ -1,17 +1,14 @@
 #!/usr/bin/env node
-/* eslint-disable no-process-exit */
-/* eslint-disable no-console */
-'use strict';
+/* eslint no-console: 'off' */
+/* eslint n/no-process-exit: 'off' */
 
-const currentVersion = process.versions.node;
+import process from 'node:process';
+import { readFileSync } from 'node:fs';
 
-import { fileURLToPath } from 'node:url';
-import fs from 'node:fs';
-import path from 'node:path';
 import semver from 'semver';
 
-const dirname = path.dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(fs.readFileSync(path.join(dirname, 'package.json').toString()));
+const currentVersion = process.versions.node;
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
 if (!semver.satisfies(currentVersion, pkg.engines.node)) {
 	console.error(`Unsupported Node.js version (v${currentVersion})`);
@@ -19,5 +16,4 @@ if (!semver.satisfies(currentVersion, pkg.engines.node)) {
 	process.exit(1);
 }
 
-// eslint-disable-next-line node/no-unsupported-features/es-syntax
 import('./src/index.mjs').then(({ main }) => main());
