@@ -1,8 +1,11 @@
 # Changelog
 
-## Head
+## 0.4.0
 
 - Removed: Node.js less than 18.12.0 support.
+- Changed: bump `cosmiconfig` to v9.
+- Changed: bump `execa` to v8.
+- Changed: bump `ora` to v7.
 
 ## 0.3.0
 
