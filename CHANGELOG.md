@@ -1,8 +1,12 @@
 # Changelog
 
+## Head
+
+- Removed: Node.js less than 18.12.0 support.
+
 ## 0.3.0
 
-- Added: `cosmiconfig`
+- Added: `cosmiconfig`.
 
 ## 0.2.0
 
