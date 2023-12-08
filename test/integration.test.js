@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-// eslint-disable-next-line node/no-unpublished-import
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const inputs = {
 	failNpmInstall: 'test/fixtures/fail-npm-install',
@@ -18,7 +18,7 @@ const inputs = {
 };
 
 function getProjectRoot(context) {
-	return context.meta.file.filepath.replace(context.meta.file.name, '');
+	return context.task.file.filepath.replace(context.task.file.name, '');
 }
 
 function setup(pathToTest, projectRoot, args = []) {

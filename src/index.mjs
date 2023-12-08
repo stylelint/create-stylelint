@@ -1,8 +1,10 @@
-/* eslint-disable no-process-exit */
 /* eslint no-console: 'off' */
+/* eslint n/no-process-exit: 'off' */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import process from 'node:process';
+
 import { cosmiconfigSync } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
