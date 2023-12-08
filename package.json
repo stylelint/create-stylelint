@@ -31,7 +31,7 @@
     "pretest": "npm run lint",
     "test": "vitest run",
     "watch": "vitest watch",
-    "release": "np"
+    "release": "np --no-release-draft"
   },
   "prettier": "@stylelint/prettier-config",
   "eslintConfig": {
