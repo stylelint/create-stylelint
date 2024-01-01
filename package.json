@@ -51,7 +51,7 @@
   "dependencies": {
     "cosmiconfig": "^9.0.0",
     "execa": "^8.0.1",
-    "ora": "^7.0.1",
+    "ora": "^8.0.1",
     "picocolors": "^1.0.0",
     "semver": "^7.5.4",
     "strip-indent": "^4.0.0",
