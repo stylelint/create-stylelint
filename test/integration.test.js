@@ -22,8 +22,8 @@ function getProjectRoot(context) {
 }
 
 function setup(pathToTest, projectRoot, args = []) {
-	return execFileSync('node', [`${projectRoot}create-stylelint.mjs`, ...args], {
-		cwd: `${projectRoot}${pathToTest}`,
+	return execFileSync('node', [path.join(projectRoot, 'create-stylelint.mjs'), ...args], {
+		cwd: path.join(projectRoot, pathToTest),
 	}).toString();
 }
 
