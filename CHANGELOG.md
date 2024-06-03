@@ -1,5 +1,9 @@
 # Changelog
 
+## Head
+
+- Fixed: no longer needed `execa` from dependencies.
+
 ## 0.4.0
 
 - Removed: Node.js less than 18.12.0 support.

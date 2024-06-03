@@ -3,11 +3,11 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 
 import { cosmiconfigSync } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
-import { execa } from 'execa';
 import ora from 'ora';
 import picocolors from 'picocolors';
 import stripIndent from 'strip-indent';
@@ -74,11 +74,11 @@ function createConfig(cwd, pkgManager) {
  * @param {string} cwd
  * @param {string} pkgManager
  */
-async function installPackages(cwd, pkgManager) {
+function installPackages(cwd, pkgManager) {
 	const spinner = ora('Installing packages...').start();
 
 	try {
-		await execa(
+		execFileSync(
 			pkgManager,
 			[`${getInstallCommand(pkgManager)}`, '-D', 'stylelint', 'stylelint-config-standard'],
 			{ cwd },
@@ -108,6 +108,6 @@ export async function main() {
 	const cwd = './';
 
 	createConfig(cwd, pkgManager);
-	await installPackages(cwd, pkgManager);
+	installPackages(cwd, pkgManager);
 	showNextSteps();
 }
