@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "cosmiconfig": "^9.0.0",
-    "execa": "^8.0.1",
+    "execa": "^9.1.0",
     "ora": "^8.0.1",
     "picocolors": "^1.0.1",
     "semver": "^7.6.2",
