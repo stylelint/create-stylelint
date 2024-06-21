@@ -1,5 +1,9 @@
 # Changelog
 
+## Head
+
+- Fixed: missing GitHub Sponsor for `funding` field in `package.json`.
+
 ## 0.4.0
 
 - Removed: Node.js less than 18.12.0 support.
