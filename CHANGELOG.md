@@ -1,7 +1,9 @@
 # Changelog
 
-## Head
+## 0.5.0
 
+- Changed: bump `execa` to v9.
+- Changed: bump `ora` to v8.
 - Fixed: missing GitHub Sponsor for `funding` field in `package.json`.
 
 ## 0.4.0
