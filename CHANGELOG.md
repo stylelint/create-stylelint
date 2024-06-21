@@ -1,8 +1,10 @@
 # Changelog
 
-## Head
+## 0.5.0
 
 - Removed: Node.js less than `18.19.0` support.
+- Changed: bump `execa` to v9.
+- Changed: bump `ora` to v8.
 - Fixed: missing GitHub Sponsor for `funding` field in `package.json`.
 
 ## 0.4.0
