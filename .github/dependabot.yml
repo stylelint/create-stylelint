@@ -11,7 +11,6 @@ updates:
     groups:
       development-dependencies:
         dependency-type: 'development'
-        exclude-patterns: ['eslint']
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
