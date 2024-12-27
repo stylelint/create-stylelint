@@ -1,10 +1,13 @@
 {
   "name": "create-stylelint",
   "version": "0.5.0",
-  "description": "The npm init script for Stylelint.",
+  "description": "The initialization  script for Stylelint.",
   "keywords": [
     "stylelint",
-    "npm init"
+    "configuration",
+    "initializer",
+    "cli",
+    "setup"
   ],
   "repository": "stylelint/create-stylelint",
   "funding": [
