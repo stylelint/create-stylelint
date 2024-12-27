@@ -46,6 +46,6 @@ export async function ensureProjectPackageJson(context: Context): Promise<void> 
 		);
 		await initializePackageJson(context);
 	} else {
-		console.error('[package.json already exists');
+		console.error('package.json already exists');
 	}
 }
