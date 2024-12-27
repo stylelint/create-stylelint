@@ -1,5 +1,4 @@
 import prompts from 'prompts';
-import { messages } from '../messages';
 
 export async function promptInstallDependencies(
 	pkgManager: string,
@@ -8,9 +7,11 @@ export async function promptInstallDependencies(
 	const { installDependencies } = await prompts({
 		type: 'confirm',
 		name: 'installDependencies',
-		message: messages.installDependenciesConfirmation(pkgManager, dependencies),
+		message: `The following dependencies will be installed using ${pkgManager}:\n\n  ${dependencies.join(
+			'\n  ',
+		)}\n\nWould you like to proceed with the installation?`,
 		initial: true,
 	});
 
-	return installDependencies;
+	return installDependencies as boolean;
 }

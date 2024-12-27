@@ -22,5 +22,5 @@ export async function promptUsagePreference(): Promise<UsagePreference> {
 		initial: 1,
 	});
 
-	return preference;
+	return preference as UsagePreference;
 }

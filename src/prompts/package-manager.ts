@@ -1,10 +1,10 @@
 import prompts from 'prompts';
-import detectPackageManager from 'which-pm-runs';
+import detectPackageManager from 'preferred-pm';
 
-export type PackageManager = 'npm' | 'pnpm' | 'yarn';
+export type PackageManagerChoice = 'npm' | 'pnpm' | 'yarn' | 'bun';
 
-export async function promptPackageManager(): Promise<PackageManager> {
-	const detectedPackageManager = detectPackageManager()?.name;
+export async function promptPackageManager(): Promise<PackageManagerChoice> {
+	const detectedPackageManager = await detectPackageManager(process.cwd());
 
 	const { packageManager } = await prompts({
 		type: 'select',
@@ -14,9 +14,21 @@ export async function promptPackageManager(): Promise<PackageManager> {
 			{ title: 'npm', value: 'npm' },
 			{ title: 'pnpm', value: 'pnpm' },
 			{ title: 'yarn', value: 'yarn' },
+			{ title: 'bun', value: 'bun' },
 		],
-		initial: detectedPackageManager === 'pnpm' ? 1 : detectedPackageManager === 'yarn' ? 2 : 0,
+		initial: (() => {
+			switch (detectedPackageManager?.name) {
+				case 'pnpm':
+					return 1;
+				case 'yarn':
+					return 2;
+				case 'bun':
+					return 3;
+				default:
+					return 0;
+			}
+		})(),
 	});
 
-	return packageManager;
+	return packageManager as PackageManagerChoice;
 }

@@ -1,65 +1,84 @@
 import process from 'node:process';
 import picocolors from 'picocolors';
-import path from 'node:path';
-import { findExistingConfig } from './actions/create-config';
-import { promptPackageManager } from './prompts/package-manager';
-import { createStylelintConfig } from './actions/create-config';
-import { installProjectDependencies } from './actions/install-dependencies';
+import * as nodePath from 'node:path';
+import { createStylelintConfig, findExistingConfig } from './actions/create-config';
 import { ensureProjectPackageJson } from './actions/ensure-package-json';
-import { messages } from './messages';
-import { promptUsagePreference } from './prompts/usage-preference';
+import { installProjectDependencies } from './actions/install';
+import { getContext } from './actions/context';
+import { showHelpAction } from './actions/help';
+import { showNextSteps } from './actions/post-install';
 import { promptInstallDependencies } from './prompts/install-now';
-import { setupProcessHandlers } from './utils/process-handlers';
+import { promptUsagePreference } from './prompts/usage-preference';
+import { promptPackageManager } from './prompts/package-manager';
 
-async function showNextSteps(): Promise<void> {
-	console.log(`
-${picocolors.green(messages.lintCommandRecommendation)}
+let isCancelled = false;
 
-${picocolors.dim(messages.customizationRecommendation)}
-    `);
-}
+process.on('SIGINT', () => {
+	console.log('\n');
+	console.log(picocolors.yellow('Operation cancelled by user.'));
+	isCancelled = true;
+	process.exit(0);
+});
 
 export async function main(): Promise<void> {
-	setupProcessHandlers();
+	let context = await getContext(process.argv.slice(2));
 
-	const cwd = process.cwd();
+	if (context.help) {
+		showHelpAction();
+		return;
+	}
+
+	if (context.dryRun) {
+		console.log(picocolors.yellow('Running in dry run mode. No changes will be made.'));
+	}
 
 	const existingConfig = findExistingConfig();
 	if (existingConfig !== null) {
-		const basename = path.basename(existingConfig.filepath);
+		const basename = nodePath.basename(existingConfig.filepath);
 		const failureMessage =
-			basename === 'packageon'
-				? messages.configExistsInPackageJson
-				: messages.configExists(basename);
+			basename === 'package.json'
+				? "A Stylelint configuration is already defined in your project's `package.json` file."
+				: `A Stylelint configuration file named "${basename}" already exists in this project.`;
 
 		console.error(
 			picocolors.red(
-				`${messages.failedToCreateConfig}:\n${failureMessage} ${messages.removeAndTryAgain}`,
+				`Failed to create the Stylelint configuration file.:\n${failureMessage} Please remove the existing configuration file and try again.`,
 			),
 		);
-		process.exit(1);
+		context.exit(1);
 	}
 
-	await ensureProjectPackageJson(cwd);
+	await ensureProjectPackageJson(context);
+
+	if (isCancelled) return;
+
+	const selectedPackageManager = await promptPackageManager();
+
+	context = { ...context, packageManager: selectedPackageManager };
+
+	if (isCancelled) return;
 
 	const usagePreference = await promptUsagePreference();
-	const pkgManager = await promptPackageManager();
+
+	if (isCancelled) return;
 
 	const dependencies = [
 		'stylelint',
 		usagePreference === 'errors' ? 'stylelint-config-recommended' : 'stylelint-config-standard',
 	];
 
-	const installNow = await promptInstallDependencies(pkgManager, dependencies);
+	const installNow = await promptInstallDependencies(context.packageManager, dependencies);
+
+	if (isCancelled) return;
 
 	if (installNow) {
-		await installProjectDependencies(cwd, pkgManager, usagePreference);
-		await createStylelintConfig(cwd, usagePreference);
+		await installProjectDependencies(context, usagePreference);
+		await createStylelintConfig(context, usagePreference);
 		await showNextSteps();
 	} else {
 		console.log(picocolors.yellow('Installation cancelled. No changes were made.'));
-		process.exit(0);
+		context.exit(0);
 	}
 }
 
-main()
+void main();

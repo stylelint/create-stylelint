@@ -1,4 +1,3 @@
-import process from 'node:process';
 import ora from 'ora';
 import type { UsagePreference } from '../prompts/usage-preference';
 import { shell } from '../shell';
