@@ -1,7 +1,7 @@
 {
   "name": "create-stylelint",
   "version": "0.5.0",
-  "description": "The initialization  script for Stylelint.",
+  "description": "The initialization script for Stylelint.",
   "keywords": [
     "stylelint",
     "configuration",
