@@ -11,12 +11,10 @@ import { promptInstallDependencies } from './prompts/install-now';
 import { promptUsagePreference } from './prompts/usage-preference';
 import { promptPackageManager } from './prompts/package-manager';
 
-let isCancelled = false;
 
 process.on('SIGINT', () => {
 	console.log('\n');
 	console.log(picocolors.yellow('Operation cancelled by user.'));
-	isCancelled = true;
 	process.exit(0);
 });
 
@@ -50,17 +48,13 @@ export async function main(): Promise<void> {
 
 	await ensureProjectPackageJson(context);
 
-	if (isCancelled) return;
 
 	const selectedPackageManager = await promptPackageManager();
 
 	context = { ...context, packageManager: selectedPackageManager };
 
-	if (isCancelled) return;
 
 	const usagePreference = await promptUsagePreference();
-
-	if (isCancelled) return;
 
 	const dependencies = [
 		'stylelint',
@@ -69,7 +63,6 @@ export async function main(): Promise<void> {
 
 	const installNow = await promptInstallDependencies(context.packageManager, dependencies);
 
-	if (isCancelled) return;
 
 	if (installNow) {
 		await installProjectDependencies(context, usagePreference);
