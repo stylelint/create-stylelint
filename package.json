@@ -4,8 +4,8 @@
   "description": "The initialization script for Stylelint.",
   "keywords": [
     "stylelint",
-    "configuration",
-    "initializer",
+    "create",
+    "init",
     "cli",
     "setup"
   ],
