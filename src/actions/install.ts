@@ -1,12 +1,8 @@
 import ora from 'ora';
-import type { UsagePreference } from '../prompts/usage-preference';
 import { shell } from '../shell';
-import { Context, PackageManager } from './context';
+import { Context } from './context';
 
-export async function installProjectDependencies(
-	context: Context,
-	usagePreference: UsagePreference,
-): Promise<void> {
+export async function installProjectDependencies(context: Context): Promise<void> {
 	const spinner = ora('Installing the necessary Stylelint packages...').start();
 
 	if (context.dryRun) {
@@ -15,15 +11,12 @@ export async function installProjectDependencies(
 		return;
 	}
 
-	const baseConfig =
-		usagePreference === 'errors' ? 'stylelint-config-recommended' : 'stylelint-config-standard';
-
 	try {
-		await shell(context.packageManager, ['add', '-D', 'stylelint', baseConfig], {
-			cwd: context.cwd,
+		await shell(context.packageManager, ['add', '-D', 'stylelint', 'stylelint-config-standard'], {
+			cwd: process.cwd(),
 		});
 	} catch (error) {
-		spinner.fail(`Failed to install the packages.:\n${error}`);
+		spinner.fail(`Failed to install the packages:\n${error}`);
 		context.exit(1);
 	}
 

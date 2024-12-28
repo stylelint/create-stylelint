@@ -7,9 +7,7 @@ import { getContext } from './actions/context';
 import { showHelpAction } from './actions/help';
 import { showNextSteps } from './actions/post-install';
 import { promptInstallDependencies } from './prompts/install-now';
-import { promptUsagePreference } from './prompts/usage-preference';
 import { promptPackageManager } from './prompts/package-manager';
-
 
 process.on('SIGINT', () => {
 	console.log('\n');
@@ -39,31 +37,22 @@ export async function main(): Promise<void> {
 
 		console.error(
 			picocolors.red(
-				`Failed to create the Stylelint configuration file.:\n${failureMessage} Please remove the existing configuration file and try again.`,
+				`Failed to create the Stylelint configuration file:\n${failureMessage} Please remove the existing configuration file and try again.`,
 			),
 		);
 		context.exit(1);
 	}
 
 	const selectedPackageManager = await promptPackageManager();
-
 	context = { ...context, packageManager: selectedPackageManager };
 
-
-	const usagePreference = await promptUsagePreference();
-
-	const dependencies = [
-		'stylelint',
-		usagePreference === 'errors' ? 'stylelint-config-recommended' : 'stylelint-config-standard',
-	];
-
+	const dependencies = ['stylelint', 'stylelint-config-standard'];
 	const installNow = await promptInstallDependencies(context.packageManager, dependencies);
 
-
 	if (installNow) {
-		await installProjectDependencies(context, usagePreference);
-		await createStylelintConfig(context, usagePreference);
-		await showNextSteps();
+		await installProjectDependencies(context);
+		await createStylelintConfig(context);
+		await showNextSteps(context.packageManager);
 	} else {
 		console.log(picocolors.yellow('Installation cancelled. No changes were made.'));
 		context.exit(0);
