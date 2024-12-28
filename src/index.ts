@@ -2,7 +2,6 @@ import process from 'node:process';
 import picocolors from 'picocolors';
 import * as nodePath from 'node:path';
 import { createStylelintConfig, findExistingConfig } from './actions/create-config';
-import { ensureProjectPackageJson } from './actions/ensure-package-json';
 import { installProjectDependencies } from './actions/install';
 import { getContext } from './actions/context';
 import { showHelpAction } from './actions/help';
@@ -45,9 +44,6 @@ export async function main(): Promise<void> {
 		);
 		context.exit(1);
 	}
-
-	await ensureProjectPackageJson(context);
-
 
 	const selectedPackageManager = await promptPackageManager();
 
