@@ -3,10 +3,6 @@ import type { UsagePreference } from '../prompts/usage-preference';
 import { shell } from '../shell';
 import { Context, PackageManager } from './context';
 
-export function getInstallCommand(pkgManager: PackageManager): string {
-	return pkgManager === 'npm' ? 'install' : 'add';
-}
-
 export async function installProjectDependencies(
 	context: Context,
 	usagePreference: UsagePreference,
@@ -22,10 +18,8 @@ export async function installProjectDependencies(
 	const baseConfig =
 		usagePreference === 'errors' ? 'stylelint-config-recommended' : 'stylelint-config-standard';
 
-	const installCommand = getInstallCommand(context.packageManager);
-
 	try {
-		await shell(context.packageManager, [installCommand, '-D', 'stylelint', baseConfig], {
+		await shell(context.packageManager, ['add', '-D', 'stylelint', baseConfig], {
 			cwd: context.cwd,
 		});
 	} catch (error) {
