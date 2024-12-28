@@ -2,13 +2,13 @@ import process from 'node:process';
 import picocolors from 'picocolors';
 import * as nodePath from 'node:path';
 import * as nodeFS from 'node:fs';
-import { createStylelintConfig, findExistingConfig } from './actions/create-config';
-import { installProjectDependencies } from './actions/install';
-import { getContext } from './actions/context';
-import { showHelpAction } from './actions/help';
-import { showNextSteps } from './actions/post-install';
-import { promptInstallDependencies } from './prompts/install-now';
-import { promptPackageManager } from './prompts/package-manager';
+import { createStylelintConfig, findExistingConfig } from './actions/create-config.js';
+import { installProjectDependencies } from './actions/install.js';
+import { getContext } from './actions/context.js';
+import { showHelpAction } from './actions/help.js';
+import { showNextSteps } from './actions/post-install.js';
+import { promptInstallDependencies } from './prompts/install-now.js';
+import { promptPackageManager } from './prompts/package-manager.js';
 
 process.on('SIGINT', () => {
 	console.log('\n');
@@ -75,5 +75,3 @@ export async function main(): Promise<void> {
 		process.exit(1);
 	}
 }
-
-void main();

@@ -1,7 +1,7 @@
 import * as nodeFS from 'node:fs';
 import * as nodePath from 'node:path';
 import ora from 'ora';
-import type { Context } from './context';
+import type { Context } from './context.js';
 import { cosmiconfigSync, type CosmiconfigResult } from 'cosmiconfig';
 
 const CONFIG_FILE = 'stylelint.config.mjs';

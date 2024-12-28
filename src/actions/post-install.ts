@@ -1,7 +1,7 @@
 import picocolors from 'picocolors';
 import * as nodeFS from 'node:fs';
 import * as nodePath from 'node:path';
-import type { PackageManager } from './context';
+import type { PackageManager } from './context.js';
 
 function getLintCommand(packageManager: PackageManager): string {
 	switch (packageManager) {

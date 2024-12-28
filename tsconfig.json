@@ -1,22 +1,25 @@
 {
 	"compilerOptions": {
-		"target": "ES2019",
-		"module": "commonjs",
-		"lib": ["ES2019"],
 		"allowJs": true,
-		"checkJs": true,
-		"noEmit": true,
-		"strict": true,
-		"allowUnusedLabels": false,
 		"allowUnreachableCode": false,
+		"allowUnusedLabels": false,
+		"checkJs": true,
+		"declaration": true,
+		"declarationDir": "./dist/types",
+		"esModuleInterop": true,
+		"module": "NodeNext",
+		"moduleResolution": "nodenext",
+		"noEmit": false,
 		"noFallthroughCasesInSwitch": true,
 		"noImplicitReturns": false,
-		"noUnusedParameters": true,
 		"noUncheckedIndexedAccess": true,
-		"esModuleInterop": true,
+		"noUnusedParameters": true,
+		"outDir": "./dist",
 		"resolveJsonModule": true,
-		"skipLibCheck": false
+		"skipLibCheck": false,
+		"strict": true,
+		"target": "ES2022"
 	},
-	"include": ["**/*.ts"],
-	"exclude": ["**/*.test.js"]
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules"]
 }

@@ -1,6 +1,6 @@
 import ora from 'ora';
-import { shell } from '../shell';
-import { Context } from './context';
+import { shell } from '../shell.js';
+import { Context } from './context.js';
 
 export async function installProjectDependencies(context: Context): Promise<void> {
 	const spinner = ora('Installing the necessary Stylelint packages...').start();
