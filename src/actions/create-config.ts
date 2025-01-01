@@ -3,13 +3,23 @@ import * as nodePath from 'node:path';
 import ora from 'ora';
 import type { Context } from './context.js';
 import { cosmiconfigSync, type CosmiconfigResult } from 'cosmiconfig';
+import picocolors from 'picocolors';
 
-const CONFIG_FILE = 'stylelint.config.mjs';
+const STYLELINT_CONFIG_FILE_NAME = 'stylelint.config.mjs';
+const DEFAULT_STYLELINT_CONFIG_CONTENT = `export default {
+  extends: ["stylelint-config-standard"]
+};
+`;
 
 export function findExistingConfig(): CosmiconfigResult | null {
-	const explorer = cosmiconfigSync('stylelint');
-	const result = explorer.search();
-	return result;
+	try {
+		const explorer = cosmiconfigSync('stylelint');
+		return explorer.search();
+	} catch (error) {
+		console.error(picocolors.red('Failed to find existing Stylelint configuration:'));
+		console.error(picocolors.red(error instanceof Error ? error.message : String(error)));
+		return null;
+	}
 }
 
 export async function createStylelintConfig(context: Context): Promise<void> {
@@ -35,20 +45,17 @@ export async function createStylelintConfig(context: Context): Promise<void> {
 		context.exit(1);
 	}
 
-	const configContent = `export default {
-  extends: ["stylelint-config-standard"]
-};
-`;
-
-	const configPath = nodePath.join(process.cwd(), CONFIG_FILE);
+	const configPath = nodePath.join(process.cwd(), STYLELINT_CONFIG_FILE_NAME);
 
 	try {
-		nodeFS.writeFileSync(configPath, configContent);
+		nodeFS.writeFileSync(configPath, DEFAULT_STYLELINT_CONFIG_CONTENT);
 	} catch (error: unknown) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		spinner.fail(`Failed to create the Stylelint configuration file:\n${errorMessage}`);
 		context.exit(1);
 	}
 
-	spinner.succeed(`Successfully created the Stylelint configuration file: ${CONFIG_FILE}`);
+	spinner.succeed(
+		`Successfully created the Stylelint configuration file: ${STYLELINT_CONFIG_FILE_NAME}`,
+	);
 }

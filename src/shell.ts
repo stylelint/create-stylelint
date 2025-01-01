@@ -57,7 +57,7 @@ export async function shell(command: string, flags: string[], opts: Options = {}
 	}
 
 	if (exitCode !== 0) {
-		throw new Error(stderr);
+		throw new Error(`Command failed with exit code ${exitCode}:\n${stderr}`);
 	}
 
 	return { stdout, stderr, exitCode };

@@ -1,10 +1,9 @@
 import prompts from 'prompts';
 import detectPackageManager from 'preferred-pm';
 import picocolors from 'picocolors';
+import { PackageManager } from '../utils/helpers.js';
 
-export type PackageManagerChoice = 'npm' | 'pnpm' | 'yarn' | 'bun';
-
-export async function promptPackageManager(): Promise<PackageManagerChoice> {
+export async function promptPackageManager(): Promise<PackageManager> {
 	const detectedPackageManager = await detectPackageManager(process.cwd());
 
 	const { packageManager } = await prompts(
@@ -40,5 +39,5 @@ export async function promptPackageManager(): Promise<PackageManagerChoice> {
 		},
 	);
 
-	return packageManager as PackageManagerChoice;
+	return packageManager as PackageManager;
 }

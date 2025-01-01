@@ -5,10 +5,12 @@ import * as nodeFS from 'node:fs';
 import { createStylelintConfig, findExistingConfig } from './actions/create-config.js';
 import { installProjectDependencies } from './actions/install.js';
 import { getContext } from './actions/context.js';
-import { showHelpAction } from './actions/help.js';
 import { showNextSteps } from './actions/post-install.js';
 import { promptInstallDependencies } from './prompts/install-now.js';
 import { promptPackageManager } from './prompts/package-manager.js';
+import { isWriteable } from './utils/isWriteable.js';
+import { getOnline } from './utils/isOnline.js';
+import { getPackageManagerValue, PackageManager } from './utils/helpers.js';
 
 process.on('SIGINT', () => {
 	console.log('\n');
@@ -16,28 +18,48 @@ process.on('SIGINT', () => {
 	process.exit(0);
 });
 
-function checkForPackageJson(): void {
+function checkForPackageJson(packageManager: PackageManager): void {
 	const packageJsonPath = nodePath.join(process.cwd(), 'package.json');
 	if (!nodeFS.existsSync(packageJsonPath)) {
-		throw new Error(
-			'A package.json file is necessary to initialize Stylelint. Run `npm init` to create a package.json file and try again.',
+		const initCommand = getPackageManagerValue(packageManager, 'commands', 'init');
+		const docsUrl = getPackageManagerValue(packageManager, 'docs', 'initialization');
+
+		console.error(
+			picocolors.red(`A package.json file is required. Run \`${initCommand}\` to create one.`),
 		);
+		console.error(picocolors.dim(`Learn more: ${docsUrl}`));
+		process.exit(1);
 	}
 }
 
 export async function main(): Promise<void> {
 	try {
-		checkForPackageJson();
+		const context = await getContext(process.argv.slice(2));
 
-		let context = await getContext(process.argv.slice(2));
+		if (!context.dryRun) {
+			checkForPackageJson(context.packageManager);
+		}
 
-		if (context.help) {
-			showHelpAction();
-			return;
+		const currentDir = process.cwd();
+		if (!(await isWriteable(currentDir))) {
+			console.error(picocolors.red(`No write permissions in directory: ${currentDir}`));
+			console.error(picocolors.dim('Please check your permissions and try again.'));
+			process.exit(1);
+		}
+
+		if (!(await getOnline())) {
+			console.error(picocolors.red('You are offline. Please check your internet connection.'));
+			process.exit(1);
 		}
 
 		if (context.dryRun) {
-			console.log(picocolors.yellow('Running in dry run mode. No changes will be made.'));
+			console.log(picocolors.yellow('Dry run mode enabled. The following actions would be taken:'));
+			console.log(picocolors.yellow('- Detect package manager: npm, yarn, pnpm, or bun'));
+			console.log(
+				picocolors.yellow('- Install dependencies: stylelint, stylelint-config-standard'),
+			);
+			console.log(picocolors.yellow('- Create Stylelint configuration file: stylelint.config.mjs'));
+			return;
 		}
 
 		const existingConfig = findExistingConfig();
@@ -56,20 +78,31 @@ export async function main(): Promise<void> {
 			context.exit(1);
 		}
 
-		const selectedPackageManager = await promptPackageManager();
-		context = { ...context, packageManager: selectedPackageManager };
+		if (
+			!context['--use-npm'] &&
+			!context['--use-pnpm'] &&
+			!context['--use-yarn'] &&
+			!context['--use-bun'] &&
+			!context.skipInstall
+		) {
+			const selectedPackageManager = await promptPackageManager();
+			context.packageManager = selectedPackageManager;
+		}
 
 		const dependencies = ['stylelint', 'stylelint-config-standard'];
-		const installNow = await promptInstallDependencies(context.packageManager, dependencies);
 
-		if (installNow) {
-			await installProjectDependencies(context);
-			await createStylelintConfig(context);
-			await showNextSteps(context.packageManager);
-		} else {
-			console.log(picocolors.yellow('Installation cancelled. No changes were made.'));
-			context.exit(0);
+		if (!context.skipInstall) {
+			const installNow = await promptInstallDependencies(context.packageManager, dependencies);
+			if (installNow) {
+				await installProjectDependencies(context);
+			} else {
+				console.log(picocolors.yellow('Installation cancelled. No changes were made.'));
+				context.exit(0);
+			}
 		}
+
+		await createStylelintConfig(context);
+		await showNextSteps(context.packageManager);
 	} catch (error) {
 		console.error(picocolors.red(error instanceof Error ? error.message : String(error)));
 		process.exit(1);
