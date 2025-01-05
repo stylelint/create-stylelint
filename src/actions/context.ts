@@ -2,18 +2,26 @@ import { pathToFileURL } from 'node:url';
 import arg from 'arg';
 import detectPackageManager from 'preferred-pm';
 import prompts from 'prompts';
-import picocolors from 'picocolors';
-import { PackageManager } from '../utils/helpers.js';
-import { showHelpAction } from './help.js';
-import { getPackageVersionFromRegistry } from '../utils/registry.js';
+import pc from 'picocolors';
+import ora from 'ora';
+import { PackageManager } from '../utils/package/helpers.js';
+import { showHelp } from './help.js';
+import { resolvePackageVersion } from '../utils/network/registry.js';
+import { validatePackageJson } from '../utils/fs/package.js';
+import { validateFlags } from '../utils/output/validate.js';
+import { log, newline } from '../utils/output/format.js';
 
 export interface Context {
 	help: boolean;
 	prompt: typeof prompts;
-	dryRun?: boolean;
+	isDryRun?: boolean;
 	cwd: URL;
-	packageManager: PackageManager;
-	skipInstall: boolean;
+	pkgManager: PackageManager | null;
+	pkgVersions: {
+		stylelint: string;
+		stylelintConfig: string;
+	};
+	shouldSkipInstall: boolean;
 	exit: (code: number) => never;
 	'--use-npm'?: boolean;
 	'--use-pnpm'?: boolean;
@@ -21,99 +29,108 @@ export interface Context {
 	'--use-bun'?: boolean;
 }
 
-export async function getContext(
-	argv: string[],
-	exitFn: (code: number) => never = process.exit,
+export function parseFlags(args: string[]): arg.Result<{
+	'--dry-run': BooleanConstructor;
+	'--help': BooleanConstructor;
+	'--use-npm': BooleanConstructor;
+	'--use-pnpm': BooleanConstructor;
+	'--use-yarn': BooleanConstructor;
+	'--use-bun': BooleanConstructor;
+	'--skip-install': BooleanConstructor;
+	'--version': BooleanConstructor;
+	'-h': string;
+	'-v': string;
+}> {
+	return arg(
+		{
+			'--dry-run': Boolean,
+			'--help': Boolean,
+			'--use-npm': Boolean,
+			'--use-pnpm': Boolean,
+			'--use-yarn': Boolean,
+			'--use-bun': Boolean,
+			'--skip-install': Boolean,
+			'--version': Boolean,
+			'-h': '--help',
+			'-v': '--version',
+		},
+		{ argv: args, permissive: true },
+	);
+}
+
+export async function getPackageManager(options: {
+	'--use-npm'?: boolean;
+	'--use-pnpm'?: boolean;
+	'--use-yarn'?: boolean;
+	'--use-bun'?: boolean;
+}): Promise<PackageManager | null> {
+	if (options['--use-npm']) return 'npm';
+	if (options['--use-pnpm']) return 'pnpm';
+	if (options['--use-yarn']) return 'yarn';
+	if (options['--use-bun']) return 'bun';
+
+	const detectedManager = await detectPackageManager(process.cwd());
+	return detectedManager?.name as PackageManager | null;
+}
+
+export async function getPackageVersions(): Promise<{
+	stylelint: string;
+	stylelintConfig: string;
+}> {
+	const loadingSpinner = ora('Resolving packages...').start();
+	const [stylelintVer, configVer] = await Promise.all([
+		resolvePackageVersion('stylelint'),
+		resolvePackageVersion('stylelint-config-standard'),
+	]);
+	loadingSpinner.succeed('Successfully resolved packages');
+	return { stylelint: stylelintVer, stylelintConfig: configVer };
+}
+
+export async function createContext(
+	args: string[],
+	exit: (code: number) => never = process.exit,
 ): Promise<Context> {
-	const argSpec = {
-		'--dry-run': Boolean,
-		'--help': Boolean,
-		'--use-npm': Boolean,
-		'--use-pnpm': Boolean,
-		'--use-yarn': Boolean,
-		'--use-bun': Boolean,
-		'--skip-install': Boolean,
-		'--version': Boolean,
-		'-h': '--help',
-		'-v': '--version',
-	} as const;
-
-	const flags = arg(argSpec, { argv, permissive: true });
-
-	if ((flags['--version'] || flags['-v']) && (flags['--help'] || flags['-h'])) {
-		console.error(picocolors.red('The flags --version and --help cannot be used together.'));
-		exitFn(1);
-	}
-
-	if (flags['--version'] || flags['-v']) {
-		const version = await getPackageVersionFromRegistry('create-stylelint');
-		console.log(version);
-		exitFn(0);
-	}
+	const flags = parseFlags(args);
+	validateFlags({ ...flags, exit });
 
 	if (flags['--help'] || flags['-h']) {
-		showHelpAction();
-		exitFn(0);
+		showHelp();
+		exit(0);
 	}
 
-	if (flags['--dry-run'] && flags['--skip-install']) {
-		console.error(
-			picocolors.red('The flags --dry-run and --skip-install cannot be used together.'),
-		);
-		exitFn(1);
+	const pkgManager = await getPackageManager(flags);
+
+	if (!flags['--dry-run']) {
+		await validatePackageJson(pkgManager);
 	}
 
-	if (
-		flags['--dry-run'] &&
-		(flags['--use-npm'] || flags['--use-pnpm'] || flags['--use-yarn'] || flags['--use-bun'])
-	) {
-		console.error(
-			picocolors.red(
-				'The flag --dry-run cannot be used with --use-npm, --use-pnpm, --use-yarn, or --use-bun.',
-			),
-		);
-		exitFn(1);
-	}
+	const cwd = new URL(`${pathToFileURL(process.cwd())}/`);
 
-	const packageManagerFlags = ['--use-npm', '--use-pnpm', '--use-yarn', '--use-bun'] as const;
-	const selectedPackageManagers = packageManagerFlags.filter((flag) => flags[flag]);
-	if (selectedPackageManagers.length > 1) {
-		console.error(picocolors.red('Only one package manager can be specified.'));
-		exitFn(1);
-	}
+	let pkgVersions = { stylelint: 'latest', stylelintConfig: 'latest' };
 
-	let packageManager: PackageManager = 'npm';
-	if (flags['--use-npm']) {
-		packageManager = 'npm';
-	} else if (flags['--use-pnpm']) {
-		packageManager = 'pnpm';
-	} else if (flags['--use-yarn']) {
-		packageManager = 'yarn';
-	} else if (flags['--use-bun']) {
-		packageManager = 'bun';
-	} else {
+	if (!flags['--dry-run']) {
 		try {
-			const detected = await detectPackageManager(process.cwd());
-			packageManager = detected?.name ?? 'npm';
+			pkgVersions = await getPackageVersions();
 		} catch (error) {
-			console.warn(picocolors.yellow('Failed to detect package manager. Defaulting to npm.'));
+			log(pc.red(`[ERROR] ${error}`));
+			log(pc.red('[ERROR] Failed to resolve package versions'));
+			newline();
+			exit(1);
 		}
 	}
-
-	const cwdPath = process.cwd();
-	const cwdURL = new URL(`${pathToFileURL(cwdPath)}/`);
 
 	return {
 		help: flags['--help'] ?? false,
 		prompt: prompts,
-		packageManager,
-		cwd: cwdURL,
-		dryRun: flags['--dry-run'],
-		skipInstall: flags['--skip-install'] ?? false,
-		exit: exitFn,
+		pkgManager,
+		pkgVersions,
+		cwd,
+		isDryRun: flags['--dry-run'],
+		shouldSkipInstall: flags['--skip-install'] ?? false,
+		exit,
 		'--use-npm': flags['--use-npm'],
 		'--use-pnpm': flags['--use-pnpm'],
 		'--use-yarn': flags['--use-yarn'],
 		'--use-bun': flags['--use-bun'],
-	} satisfies Context;
+	};
 }

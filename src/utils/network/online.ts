@@ -1,8 +1,12 @@
 import { execSync } from 'node:child_process';
 import { lookup } from 'node:dns/promises';
 import { URL } from 'node:url';
+import { log } from '../output/format.js';
 
-function getProxy(): string | undefined {
+/**
+ * Retrieves the HTTPS proxy configuration either from env variables or npm config.
+ */
+function resolveHttpsProxy(): string | undefined {
 	const envProxy = process.env.https_proxy || process.env.HTTPS_PROXY;
 	if (envProxy) {
 		return envProxy;
@@ -12,20 +16,24 @@ function getProxy(): string | undefined {
 		const npmProxy = execSync('npm config get https-proxy', { encoding: 'utf-8' }).trim();
 		return npmProxy !== 'null' ? npmProxy : undefined;
 	} catch (error) {
-		console.warn('Failed to retrieve proxy from npm config:', error);
+		log(`Failed to retrieve proxy from npm config: ${error}\n`);
 		return undefined;
 	}
 }
 
-export async function getOnline(): Promise<boolean> {
+/**
+ * Check if the system is online by attempting DNS lookups
+ * @see https://nodejs.org/api/dns.html
+ */
+export async function checkNetworkConnection(): Promise<boolean> {
 	try {
 		await lookup('registry.yarnpkg.com');
 		return true;
 	} catch (dnsError) {
-		console.warn('DNS lookup for failed:', dnsError);
+		log(`DNS lookup failed: ${dnsError}\n`);
 	}
 
-	const proxy = getProxy();
+	const proxy = resolveHttpsProxy();
 	if (!proxy) return false;
 
 	try {
@@ -33,7 +41,7 @@ export async function getOnline(): Promise<boolean> {
 		await lookup(proxyUrl.hostname);
 		return true;
 	} catch (error) {
-		console.warn('Proxy validation failed:', error);
+		log(`Proxy validation failed: ${error}\n`);
 		return false;
 	}
 }

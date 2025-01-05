@@ -25,7 +25,6 @@ const text = (stream: Readable | null) =>
 		: '';
 
 export async function shell(command: string, flags: string[], opts: Options = {}): Promise<Output> {
-
 	let child: ChildProcess;
 	let stdout = '';
 	let stderr = '';

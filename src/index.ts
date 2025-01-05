@@ -1,110 +1,61 @@
 import process from 'node:process';
-import picocolors from 'picocolors';
-import * as nodePath from 'node:path';
-import * as nodeFS from 'node:fs';
-import { createStylelintConfig, findExistingConfig } from './actions/create-config.js';
-import { installProjectDependencies } from './actions/install.js';
-import { getContext } from './actions/context.js';
-import { showNextSteps } from './actions/post-install.js';
-import { promptInstallDependencies } from './prompts/install-now.js';
+import pc from 'picocolors';
+import { Context, createContext } from './actions/context.js';
+import { setupConfig } from './actions/config.js';
+import { installDeps } from './actions/install.js';
+import { showNextSteps } from './actions/post-setup.js';
 import { promptPackageManager } from './prompts/package-manager.js';
-import { isWriteable } from './utils/isWriteable.js';
-import { getOnline } from './utils/isOnline.js';
-import { getPackageManagerValue, PackageManager } from './utils/helpers.js';
+import { checkWritePermissions } from './utils/fs/permissions.js';
+import { checkNetworkConnection } from './utils/network/online.js';
+import { log } from './utils/output/format.js';
+import { validatePackageJson } from './utils/fs/package.js';
 
 process.on('SIGINT', () => {
-	console.log('\n');
-	console.log(picocolors.yellow('Operation cancelled by user.'));
-	process.exit(0);
+	log(pc.yellow('\nProcess interrupted by user. Exiting...\n'));
+	process.exit(1);
 });
 
-function checkForPackageJson(packageManager: PackageManager): void {
-	const packageJsonPath = nodePath.join(process.cwd(), 'package.json');
-	if (!nodeFS.existsSync(packageJsonPath)) {
-		const initCommand = getPackageManagerValue(packageManager, 'commands', 'init');
-		const docsUrl = getPackageManagerValue(packageManager, 'docs', 'initialization');
+process.on('SIGTERM', () => {
+	log(pc.yellow('\nProcess terminated. Exiting...\n'));
+	process.exit(1);
+});
 
-		console.error(
-			picocolors.red(`A package.json file is required. Run \`${initCommand}\` to create one.`),
-		);
-		console.error(picocolors.dim(`Learn more: ${docsUrl}`));
+async function validateEnvironment(context: Context): Promise<void> {
+	const currentDir = process.cwd();
+	if (!(await checkWritePermissions(currentDir))) {
+		log(pc.red(`No write permissions in directory: ${currentDir}\n`));
+		log(pc.dim('Please check your permissions and try again.\n'));
 		process.exit(1);
 	}
+
+	await validatePackageJson(context.pkgManager);
+
+	const isOnline = await checkNetworkConnection();
+	if (!isOnline) {
+		log(pc.red('No internet connection detected.\n'));
+		log(pc.dim('Please check your network connection and try again.\n'));
+		process.exit(1);
+	}
+}
+
+async function setupStylelint(context: Context): Promise<void> {
+	await setupConfig (context);
+
+	await promptPackageManager(context);
+
+	await installDeps(context);
+	await showNextSteps(context);
 }
 
 export async function main(): Promise<void> {
 	try {
-		const context = await getContext(process.argv.slice(2));
-
-		if (!context.dryRun) {
-			checkForPackageJson(context.packageManager);
-		}
-
-		const currentDir = process.cwd();
-		if (!(await isWriteable(currentDir))) {
-			console.error(picocolors.red(`No write permissions in directory: ${currentDir}`));
-			console.error(picocolors.dim('Please check your permissions and try again.'));
-			process.exit(1);
-		}
-
-		if (!(await getOnline())) {
-			console.error(picocolors.red('You are offline. Please check your internet connection.'));
-			process.exit(1);
-		}
-
-		if (context.dryRun) {
-			console.log(picocolors.yellow('Dry run mode enabled. The following actions would be taken:'));
-			console.log(picocolors.yellow('- Detect package manager: npm, yarn, pnpm, or bun'));
-			console.log(
-				picocolors.yellow('- Install dependencies: stylelint, stylelint-config-standard'),
-			);
-			console.log(picocolors.yellow('- Create Stylelint configuration file: stylelint.config.mjs'));
-			return;
-		}
-
-		const existingConfig = findExistingConfig();
-		if (existingConfig !== null) {
-			const basename = nodePath.basename(existingConfig.filepath);
-			const failureMessage =
-				basename === 'package.json'
-					? "A Stylelint configuration is already defined in your project's `package.json` file."
-					: `A Stylelint configuration file named "${basename}" already exists in this project.`;
-
-			console.error(
-				picocolors.red(
-					`Failed to create the Stylelint configuration file:\n${failureMessage} Please remove the existing configuration file and try again.`,
-				),
-			);
-			context.exit(1);
-		}
-
-		if (
-			!context['--use-npm'] &&
-			!context['--use-pnpm'] &&
-			!context['--use-yarn'] &&
-			!context['--use-bun'] &&
-			!context.skipInstall
-		) {
-			const selectedPackageManager = await promptPackageManager();
-			context.packageManager = selectedPackageManager;
-		}
-
-		const dependencies = ['stylelint', 'stylelint-config-standard'];
-
-		if (!context.skipInstall) {
-			const installNow = await promptInstallDependencies(context.packageManager, dependencies);
-			if (installNow) {
-				await installProjectDependencies(context);
-			} else {
-				console.log(picocolors.yellow('Installation cancelled. No changes were made.'));
-				context.exit(0);
-			}
-		}
-
-		await createStylelintConfig(context);
-		await showNextSteps(context.packageManager);
+		const context = await createContext(process.argv.slice(2));
+		await validateEnvironment(context);
+		await setupStylelint(context);
 	} catch (error) {
-		console.error(picocolors.red(error instanceof Error ? error.message : String(error)));
+		log(pc.red(`${error}\n`));
 		process.exit(1);
 	}
 }
+
+main();

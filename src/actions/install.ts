@@ -1,28 +1,55 @@
 import ora from 'ora';
-import { shell } from '../shell.js';
+import pc from 'picocolors';
+import { shell } from '../utils/output/shell.js';
 import { Context } from './context.js';
-import picocolors from 'picocolors';
+import { createBox, log, newline } from '../utils/output/format.js';
+import { promptForInstallation } from '../prompts/install.js';
+import { getInstallCommand } from '../utils/package/helpers.js';
 
-const STYLELINT_DEPENDENCIES = ['stylelint', 'stylelint-config-standard'];
+interface Package {
+	name: string;
+	version: string;
+}
 
-export async function installProjectDependencies(context: Context): Promise<void> {
-	const spinner = ora('Installing the necessary Stylelint packages...').start();
+function logInfo(message: string): void {
+	newline();
+	log(`${' '.repeat(2)}${pc.bgMagenta(pc.white(' INFO '))}${' '.repeat(8)}${pc.magenta(message)}`);
+}
 
-	if (context.dryRun) {
-		spinner.info('Installing the necessary Stylelint packages... (skipped due to --dry-run)');
-		spinner.stop();
-		return;
+async function runInstall(pkgManager: string, pkgs: Package[]): Promise<void> {
+	if (!pkgManager) {
+		throw new Error('No package manager specified.');
 	}
+
+	const installFlags = pkgs.map((pkg) => `${pkg.name}@${pkg.version}`);
+	await shell(pkgManager, ['add', '-D', ...installFlags], { cwd: process.cwd() });
+}
+
+async function installWithLoader(pkgManager: string, pkgs: Package[], ctx: Context): Promise<void> {
+	const spinner = ora('Installing the necessary Stylelint pkgs...').start();
 
 	try {
-		await shell(context.packageManager, ['add', '-D', ...STYLELINT_DEPENDENCIES], {
-			cwd: process.cwd(),
-		});
+		await runInstall(pkgManager, pkgs);
+		spinner.succeed('Successfully installed dependencies');
 	} catch (error) {
-		spinner.fail(`Failed to install the packages:\n${error}`);
-		console.error(picocolors.red('Ensure your package manager is installed and try again.'));
-		context.exit(1);
+		spinner.fail('Failed to install dependencies');
+		ctx.exit(1);
 	}
+}
 
-	spinner.succeed('Successfully installed the required Stylelint packages.');
+export async function installDeps(ctx: Context): Promise<void> {
+	const pkgs: Package[] = [
+		{ name: 'stylelint', version: ctx.pkgVersions.stylelint },
+		{ name: 'stylelint-config-standard', version: ctx.pkgVersions.stylelintConfig },
+	];
+
+	const installCommand = getInstallCommand(ctx.pkgManager!, pkgs);
+
+	logInfo('Stylelint will run the following command:');
+	log(`${' '.repeat(16)}If you skip this step, you can always run it yourself later.`);
+	newline();
+	log(createBox([installCommand]) + '\n');
+
+	await promptForInstallation(ctx);
+	await installWithLoader(ctx.pkgManager!, pkgs, ctx);
 }
