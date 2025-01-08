@@ -22,13 +22,15 @@ process.on('SIGTERM', () => {
 
 async function validateEnvironment(context: Context): Promise<void> {
 	const currentDir = process.cwd();
-	if (!(await checkWritePermissions(currentDir))) {
+	if (!context.isDryRun && !(await checkWritePermissions(currentDir))) {
 		log(pc.red(`No write permissions in directory: ${currentDir}\n`));
 		log(pc.dim('Please check your permissions and try again.\n'));
 		process.exit(1);
 	}
 
-	await validatePackageJson(context.pkgManager);
+	if (!context.isDryRun) {
+		await validatePackageJson(context.pkgManager);
+	}
 
 	const isOnline = await checkNetworkConnection();
 	if (!isOnline) {
@@ -39,9 +41,9 @@ async function validateEnvironment(context: Context): Promise<void> {
 }
 
 async function setupStylelint(context: Context): Promise<void> {
-	await setupConfig (context);
+	await setupConfig(context);
 
-	await promptPackageManager(context);
+	context.pkgManager = await promptPackageManager(context);
 
 	await installDeps(context);
 	await showNextSteps(context);
@@ -57,5 +59,3 @@ export async function main(): Promise<void> {
 		process.exit(1);
 	}
 }
-
-main();

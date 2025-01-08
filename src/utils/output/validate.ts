@@ -26,18 +26,6 @@ export function validateFlags(flags: Flags): void {
 		flags.exit(1);
 	}
 
-	if (
-		flags['--dry-run'] &&
-		(flags['--use-npm'] || flags['--use-pnpm'] || flags['--use-yarn'] || flags['--use-bun'])
-	) {
-		log(
-			pc.red(
-				'The flag --dry-run cannot be used with --use-npm, --use-pnpm, --use-yarn, or --use-bun.\n',
-			),
-		);
-		flags.exit(1);
-	}
-
 	const packageManagerFlags = ['--use-npm', '--use-pnpm', '--use-yarn', '--use-bun'] as const;
 	const selectedPackageManagers = packageManagerFlags.filter((flag) => flags[flag]);
 	if (selectedPackageManagers.length > 1) {

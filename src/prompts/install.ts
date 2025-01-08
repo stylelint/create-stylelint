@@ -19,15 +19,11 @@ export async function promptForInstallation(context: Context): Promise<boolean> 
 	if (!response.proceed) {
 		log(
 			`${' '.repeat(2)}${pc.bgYellow(pc.black(' CANCEL '))}${' '.repeat(6)}${pc.yellow(
-				'Dependency installation ',
+				'Dependency installation was',
 			)}${pc.bold(pc.yellow('NOT'))}${pc.yellow(' completed.')}`,
 		);
 		newline();
 		context.exit(0);
-	}
-
-	if (context.isDryRun) {
-		logDryRunSkipped('dependency installation'); 
 	}
 
 	if (context.shouldSkipInstall) {

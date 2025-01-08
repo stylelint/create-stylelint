@@ -4,7 +4,7 @@ import terminalLink from 'terminal-link';
 import type { Context } from './context.js';
 import { log, newline } from '../utils/output/format.js';
 
-export async function showNextSteps(context: Context): Promise<void> {
+async function showNextSteps(context: Context): Promise<void> {
 	const pkgManager = context.pkgManager as PackageManager;
 	const lintCmd = getLintCommand(pkgManager);
 
@@ -37,3 +37,5 @@ export async function showNextSteps(context: Context): Promise<void> {
 
 	log(`${' '.repeat(2)}${docLink}`);
 }
+
+export { showNextSteps };

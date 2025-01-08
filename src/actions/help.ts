@@ -1,5 +1,5 @@
 import pc from 'picocolors';
-import { log } from '../utils/output/format.js';
+import { log, newline } from '../utils/output/format.js';
 
 export function showHelp(): void {
 	log(`

@@ -98,6 +98,18 @@ export async function createContext(
 		exit(0);
 	}
 
+	if (flags['--version'] || flags['-v']) {
+		try {
+			const version = await resolvePackageVersion('create-stylelint');
+			log(`create-stylelint v${version}`);
+			exit(0);
+		} catch (error) {
+			log(pc.red('Failed to fetch package version'));
+			log(pc.dim('Please check your network connection and try again.\n'));
+			exit(1);
+		}
+	}
+
 	const pkgManager = await getPackageManager(flags);
 
 	if (!flags['--dry-run']) {

@@ -19,15 +19,11 @@ export async function promptConfigCreation(context: Context): Promise<boolean> {
 	if (!response.proceed) {
 		log(
 			`${' '.repeat(2)}${pc.bgYellow(pc.black(' CANCEL '))}${' '.repeat(6)}${pc.yellow(
-				'Configuration file ',
+				'Configuration file was ',
 			)}${pc.bold(pc.yellow('NOT'))}${pc.yellow(' created.')}`,
 		);
 		newline();
 		context.exit(0);
-	}
-
-	if (context.isDryRun) {
-		logDryRunSkipped('configuration file creation'); 
 	}
 
 	return response.proceed;

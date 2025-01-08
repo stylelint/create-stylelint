@@ -6,26 +6,15 @@ import { cosmiconfigSync } from 'cosmiconfig';
 import { Context } from './context.js';
 import { createBox, log, newline } from '../utils/output/format.js';
 import { promptConfigCreation } from '../prompts/config.js';
+import { logDryRunSkipped } from '../utils/prompts.js';
 
 const DEFAULT_STYLELINT_CONFIG_CONTENT = `export default {
   extends: ['stylelint-config-standard']
-};
-`;
+};`;
 
 export interface ConfigResult {
 	filepath: string;
 	exists: boolean;
-}
-
-function logError(message: string): void {
-	newline();
-	log(`${' '.repeat(2)}${pc.bgRed(pc.white(' ERROR '))}${' '.repeat(7)}${pc.red(message)}`);
-	newline();
-}
-
-function logInfo(message: string): void {
-	newline();
-	log(`${' '.repeat(2)}${pc.bgMagenta(pc.white(' INFO '))}${' '.repeat(8)}${pc.magenta(message)}`);
 }
 
 export function findConfig(): ConfigResult | null {
@@ -44,7 +33,12 @@ export async function writeConfig(configPath: string, content: string): Promise<
 }
 
 export function showConfig(configContent: string): void {
-	logInfo('Creating Stylelint configuration file...');
+	newline();
+	log(
+		`${' '.repeat(2)}${pc.bgMagenta(pc.white(' INFO '))}${' '.repeat(8)}${pc.magenta(
+			'Creating Stylelint configuration file...',
+		)}`,
+	);
 	log(`${' '.repeat(16)}The following configuration will be added to your project:`);
 	newline();
 
@@ -61,7 +55,7 @@ export function showConfig(configContent: string): void {
 	);
 }
 
-export function checkConfig(existingConfig: ConfigResult | null, ctx: Context): void {
+export function checkConfig(existingConfig: ConfigResult | null, context: Context): void {
 	if (!existingConfig) return;
 
 	const basename = path.basename(existingConfig.filepath);
@@ -70,11 +64,22 @@ export function checkConfig(existingConfig: ConfigResult | null, ctx: Context): 
 			? "A Stylelint configuration is already defined in your project's `package.json` file."
 			: `A Stylelint configuration file named "${basename}" already exists in this project.`;
 
-	logError(`Failed to create the Stylelint configuration file:\n${message}`);
-	ctx.exit(1);
+	newline();
+	log(
+		`${' '.repeat(2)}${pc.bgRed(pc.white(' ERROR '))}${' '.repeat(7)}${pc.red(
+			`Failed to create the Stylelint configuration file:\n${message}`,
+		)}`,
+	);
+	newline();
+	context.exit(1);
 }
 
-async function createConfig(ctx: Context): Promise<void> {
+async function createConfig(context: Context): Promise<void> {
+	if (context.isDryRun) {
+		logDryRunSkipped('configuration file creation');
+		return;
+	}
+
 	const spinner = ora('Creating Stylelint configuration file...').start();
 
 	try {
@@ -88,18 +93,18 @@ async function createConfig(ctx: Context): Promise<void> {
 			)}Failed to create configuration file`,
 		);
 		log(pc.dim('Please check your file permissions and try again.\n'));
-		ctx.exit(1);
+		context.exit(1);
 	}
 }
 
-export async function setupConfig(ctx: Context): Promise<void> {
+export async function setupConfig(context: Context): Promise<void> {
 	const existingConfig = findConfig();
-	checkConfig(existingConfig, ctx);
+	checkConfig(existingConfig, context);
 
 	showConfig(DEFAULT_STYLELINT_CONFIG_CONTENT);
 
-	const proceed = await promptConfigCreation(ctx);
+	const proceed = await promptConfigCreation(context);
 	if (!proceed) return;
 
-	await createConfig(ctx);
+	await createConfig(context);
 }
