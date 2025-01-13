@@ -1,82 +1,48 @@
-export type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'bun';
+export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun';
+export type CommandType = 'init' | 'lint' | 'install';
 
-interface PackageManagerCommands {
-	init: {
-		command: string;
-		docs: string;
-	};
-	lint: string;
-	install: (packages: { name: string; version: string }[]) => string;
+export type Package = { name: string; version: string };
+
+interface CommandConfig {
+    init: { command: string; docs: string };
+    lint: string;
+    install: (packages: Package[]) => string;
 }
 
-const generateInstallCommand =
-	(manager: string) => (packages: { name: string; version: string }[]) =>
-		`${manager} add ${packages
-			.map((pkg) => `${pkg.name}@^${pkg.version}`)
-			.join(' ')}`;
-
-const generateLintCommand = (manager: string) => `${manager} run stylelint "**/*.css"`;
-
-const PACKAGE_MANAGER_COMMANDS: Record<PackageManager, PackageManagerCommands> = {
+const PACKAGE_MANAGER_COMMANDS: Record<PackageManager, CommandConfig> = {
 	npm: {
-		init: {
-			command: 'npm init',
-			docs: 'https://docs.npmjs.com/cli/v11/commands/npm-init',
-		},
-		lint: generateLintCommand('npm'),
-		install: generateInstallCommand('npm'),
+		init: { command: 'npm init', docs: 'https://docs.npmjs.com/cli/v11/commands/npm-init' },
+		lint: 'npm run stylelint "**/*.css"',
+		install: (packages) => `npm add -D ${packages.map((p) => `${p.name}@${p.version}`).join(' ')}`,
 	},
 	yarn: {
-		init: {
-			command: 'yarn init',
-			docs: 'https://yarnpkg.com/cli/init',
-		},
-		lint: generateLintCommand('yarn'),
-		install: generateInstallCommand('yarn'),
+		init: { command: 'yarn init', docs: 'https://yarnpkg.com/cli/init' },
+		lint: 'yarn run stylelint "**/*.css"',
+		install: (packages) => `yarn add -D ${packages.map((p) => `${p.name}@${p.version}`).join(' ')}`,
 	},
 	pnpm: {
-		init: {
-			command: 'pnpm init',
-			docs: 'https://pnpm.io/cli/init',
-		},
-		lint: generateLintCommand('pnpm'),
-		install: generateInstallCommand('pnpm'),
+		init: { command: 'pnpm init', docs: 'https://pnpm.io/cli/init' },
+		lint: 'pnpm run stylelint "**/*.css"',
+		install: (packages) => `pnpm add -D ${packages.map((p) => `${p.name}@${p.version}`).join(' ')}`,
 	},
 	bun: {
-		init: {
-			command: 'bun init',
-			docs: 'https://bun.sh/docs/cli/init',
-		},
-		lint: generateLintCommand('bun'),
-		install: generateInstallCommand('bun'),
+		init: { command: 'bun init', docs: 'https://bun.sh/docs/cli/init' },
+		lint: 'bun run stylelint "**/*.css"',
+		install: (packages) => `bun add -D ${packages.map((p) => `${p.name}@${p.version}`).join(' ')}`,
 	},
 };
 
-export function getCommand(
-	packageManager: PackageManager,
-	command: keyof PackageManagerCommands,
-	packages?: { name: string; version: string }[],
-): string | { command: string; docs: string } {
-	const commands = PACKAGE_MANAGER_COMMANDS[packageManager] ?? PACKAGE_MANAGER_COMMANDS.npm;
-
-	if (command === 'install') {
-		if (!packages) {
-			throw new Error('Packages array is required for install command');
-		}
-		return commands.install(packages);
-	}
-
-	if (command === 'init') {
-		return commands.init;
-	}
-
-	return commands[command];
+export function getInitCommand(packageManager: PackageManager = 'npm'): { command: string; docs: string } {
+	return PACKAGE_MANAGER_COMMANDS[packageManager].init;
 }
 
-export const getInstallCommand = (
-	packageManager: PackageManager,
-	packages: { name: string; version: string }[],
-): string => getCommand(packageManager, 'install', packages) as string;
+export function getLintCommand(packageManager: PackageManager = 'npm'): string {
+	return PACKAGE_MANAGER_COMMANDS[packageManager].lint;
+}
 
-export const getLintCommand = (packageManager: PackageManager): string =>
-	getCommand(packageManager, 'lint') as string;
+export function getInstallCommand(packageManager: PackageManager = 'npm', packages: Package[]): string {
+	if (!packages.length) {
+					throw new Error('Packages array is required for install command and must not be empty');
+	}
+	return PACKAGE_MANAGER_COMMANDS[packageManager].install(packages);
+}

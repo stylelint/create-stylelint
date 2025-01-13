@@ -1,35 +1,33 @@
 import { pathToFileURL } from 'node:url';
 import arg from 'arg';
-import detectPackageManager from 'preferred-pm';
 import prompts from 'prompts';
-import pc from 'picocolors';
+import { red, dim } from 'picocolors';
 import ora from 'ora';
 import { PackageManager } from '../utils/package/helpers.js';
 import { showHelp } from './help.js';
 import { resolvePackageVersion } from '../utils/network/registry.js';
 import { validatePackageJson } from '../utils/fs/package.js';
-import { validateFlags } from '../utils/output/validate.js';
 import { log, newline } from '../utils/output/format.js';
 
 export interface Context {
 	help: boolean;
 	prompt: typeof prompts;
 	isDryRun?: boolean;
-	cwd: URL;
-	pkgManager: PackageManager | null;
-	pkgVersions: {
+	currentWorkingDirectory: URL;
+	packageManager: PackageManager;
+	packageVersions: {
 		stylelint: string;
 		stylelintConfig: string;
 	};
 	shouldSkipInstall: boolean;
 	exit: (code: number) => never;
-	'--use-npm'?: boolean;
-	'--use-pnpm'?: boolean;
-	'--use-yarn'?: boolean;
-	'--use-bun'?: boolean;
+	useNpm?: boolean;
+	usePnpm?: boolean;
+	useYarn?: boolean;
+	useBun?: boolean;
 }
 
-export function parseFlags(args: string[]): arg.Result<{
+export type Flags = arg.Result<{
 	'--dry-run': BooleanConstructor;
 	'--help': BooleanConstructor;
 	'--use-npm': BooleanConstructor;
@@ -40,7 +38,9 @@ export function parseFlags(args: string[]): arg.Result<{
 	'--version': BooleanConstructor;
 	'-h': string;
 	'-v': string;
-}> {
+}>;
+
+export function parseFlags(args: string[]): Flags {
 	return arg(
 		{
 			'--dry-run': Boolean,
@@ -58,41 +58,50 @@ export function parseFlags(args: string[]): arg.Result<{
 	);
 }
 
-export async function getPackageManager(options: {
-	'--use-npm'?: boolean;
-	'--use-pnpm'?: boolean;
-	'--use-yarn'?: boolean;
-	'--use-bun'?: boolean;
-}): Promise<PackageManager | null> {
-	if (options['--use-npm']) return 'npm';
-	if (options['--use-pnpm']) return 'pnpm';
-	if (options['--use-yarn']) return 'yarn';
-	if (options['--use-bun']) return 'bun';
+export function validateFlags(flags: Flags, exit: (code: number) => never): void {
+	if ((flags['--version'] || flags['-v']) && (flags['--help'] || flags['-h'])) {
+		log(red('The flags --version and --help cannot be used together.\n'));
+		exit(1);
+	}
 
-	const detectedManager = await detectPackageManager(process.cwd());
-	return detectedManager?.name as PackageManager | null;
+	if (flags['--dry-run'] && flags['--skip-install']) {
+		log(red('The flags --dry-run and --skip-install cannot be used together.\n'));
+		exit(1);
+	}
+
+	const packageManagerFlags = ['--use-npm', '--use-pnpm', '--use-yarn', '--use-bun'] as const;
+	const selectedPackageManagers = packageManagerFlags.filter((flag) => flags[flag]);
+	if (selectedPackageManagers.length > 1) {
+		log(red('Only one package manager can be specified.\n'));
+		exit(1);
+	}
 }
 
-export async function getPackageVersions(): Promise<{
-	stylelint: string;
-	stylelintConfig: string;
-}> {
-	const loadingSpinner = ora('Resolving packages...').start();
-	const [stylelintVer, configVer] = await Promise.all([
-		resolvePackageVersion('stylelint'),
-		resolvePackageVersion('stylelint-config-standard'),
-	]);
-	loadingSpinner.succeed('Successfully resolved packages');
-	return { stylelint: stylelintVer, stylelintConfig: configVer };
+export function determinePackageManagerFromFlags(flags: Flags): PackageManager | null {
+	if (flags['--use-npm']) return 'npm';
+	if (flags['--use-pnpm']) return 'pnpm';
+	if (flags['--use-yarn']) return 'yarn';
+	if (flags['--use-bun']) return 'bun';
+
+	return null;
 }
 
-export async function createContext(
-	args: string[],
-	exit: (code: number) => never = process.exit,
-): Promise<Context> {
-	const flags = parseFlags(args);
-	validateFlags({ ...flags, exit });
+async function resolvePackageVersions(): Promise<{ stylelint: string; stylelintConfig: string }> {
+	const loadingSpinner = ora('Resolving package versions...').start();
+	try {
+		const [stylelintVersion, stylelintConfigVersion] = await Promise.all([
+			resolvePackageVersion('stylelint'),
+			resolvePackageVersion('stylelint-config-standard'),
+		]);
+		loadingSpinner.succeed('Successfully resolved package versions');
+		return { stylelint: stylelintVersion, stylelintConfig: stylelintConfigVersion };
+	} catch (error) {
+		loadingSpinner.fail('Failed to resolve package versions');
+		throw error;
+	}
+}
 
+async function handleSpecialFlags(flags: Flags, exit: (code: number) => never): Promise<void> {
 	if (flags['--help'] || flags['-h']) {
 		showHelp();
 		exit(0);
@@ -104,45 +113,58 @@ export async function createContext(
 			log(`create-stylelint v${version}`);
 			exit(0);
 		} catch (error) {
-			log(pc.red('Failed to fetch package version'));
-			log(pc.dim('Please check your network connection and try again.\n'));
+			log(red('Failed to fetch package version'));
+			log(dim('Please check your network connection and try again.\n'));
 			exit(1);
 		}
 	}
+}
 
-	const pkgManager = await getPackageManager(flags);
+export async function createContext(
+	args: string[],
+	exit: (code: number) => never = process.exit,
+): Promise<Context> {
+	const flags = parseFlags(args);
+	validateFlags(flags, exit);
+	await handleSpecialFlags(flags, exit);
+
+	let packageManager: PackageManager | null = null;
+	if (flags['--use-npm']) packageManager = 'npm';
+	if (flags['--use-pnpm']) packageManager = 'pnpm';
+	if (flags['--use-yarn']) packageManager = 'yarn';
+	if (flags['--use-bun']) packageManager = 'bun';
 
 	if (!flags['--dry-run']) {
-		await validatePackageJson(pkgManager);
+		await validatePackageJson(packageManager);
 	}
 
-	const cwd = new URL(`${pathToFileURL(process.cwd())}/`);
+	const currentWorkingDirectory = new URL(`${pathToFileURL(process.cwd())}/`);
 
-	let pkgVersions = { stylelint: 'latest', stylelintConfig: 'latest' };
+	let packageVersions = { stylelint: '', stylelintConfig: '' };
 
 	if (!flags['--dry-run']) {
 		try {
-			pkgVersions = await getPackageVersions();
+			packageVersions = await resolvePackageVersions();
 		} catch (error) {
-			log(pc.red(`[ERROR] ${error}`));
-			log(pc.red('[ERROR] Failed to resolve package versions'));
+			log(red(`[ERROR] ${error}`));
+			log(red('[ERROR] Failed to resolve package versions'));
 			newline();
 			exit(1);
 		}
 	}
 
 	return {
-		help: flags['--help'] ?? false,
-		prompt: prompts,
-		pkgManager,
-		pkgVersions,
-		cwd,
-		isDryRun: flags['--dry-run'],
-		shouldSkipInstall: flags['--skip-install'] ?? false,
+		currentWorkingDirectory,
 		exit,
-		'--use-npm': flags['--use-npm'],
-		'--use-pnpm': flags['--use-pnpm'],
-		'--use-yarn': flags['--use-yarn'],
-		'--use-bun': flags['--use-bun'],
+		help: flags['--help'] ?? false,
+		isDryRun: flags['--dry-run'],
+		packageManager: packageManager || 'npm',
+		packageVersions,
+		prompt: prompts,
+		shouldSkipInstall: flags['--skip-install'] ?? false,
+		useBun: flags['--use-bun'],
+		useNpm: flags['--use-npm'],
+		usePnpm: flags['--use-pnpm'],
+		useYarn: flags['--use-yarn'],
 	};
 }

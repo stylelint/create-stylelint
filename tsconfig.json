@@ -1,25 +1,9 @@
 {
-	"compilerOptions": {
-		"allowJs": true,
-		"allowUnreachableCode": false,
-		"allowUnusedLabels": false,
-		"checkJs": true,
-		"declaration": true,
-		"declarationDir": "./dist/types",
-		"esModuleInterop": true,
-		"module": "NodeNext",
-		"moduleResolution": "nodenext",
-		"noEmit": false,
-		"noFallthroughCasesInSwitch": true,
-		"noImplicitReturns": false,
-		"noUncheckedIndexedAccess": true,
-		"noUnusedParameters": true,
-		"outDir": "./dist",
-		"resolveJsonModule": true,
-		"skipLibCheck": false,
-		"strict": true,
-		"target": "ES2022"
-	},
-	"include": ["src/**/*.ts"],
-	"exclude": ["node_modules"]
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "noEmit": false
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "test/**/*"]
 }

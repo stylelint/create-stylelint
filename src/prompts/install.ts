@@ -1,40 +1,31 @@
-import { Context } from '../actions/context.js';
-import pc from 'picocolors';
-import { log, newline } from '../utils/output/format.js';
-import { handlePromptCancel, logDryRunSkipped } from '../utils/prompts.js';
+import type { Context } from '$/actions/context.js';
+import { bgYellow, black, yellow, bold } from 'picocolors';
+import { log, newline } from '$/output/format.js';
 
 export async function promptForInstallation(context: Context): Promise<boolean> {
 	const response = await context.prompt(
 		{
 			type: 'confirm',
 			name: 'proceed',
-			message: 'Continue?',
+			message: 'Install Stylelint dependencies?',
 			initial: true,
 		},
 		{
-			onCancel: () => handlePromptCancel(context), 
+			onCancel: () => {
+				newline();
+				log(yellow('Operation cancelled by user'));
+				context.exit(0);
+			},
 		},
 	);
 
 	if (!response.proceed) {
 		log(
-			`${' '.repeat(2)}${pc.bgYellow(pc.black(' CANCEL '))}${' '.repeat(6)}${pc.yellow(
-				'Dependency installation was',
-			)}${pc.bold(pc.yellow('NOT'))}${pc.yellow(' completed.')}`,
+			`${' '.repeat(2)}${bgYellow(black(' CANCEL '))}${' '.repeat(6)}${yellow(
+				'Dependencies were ',
+			)}${bold(yellow('NOT'))}${yellow(' installed.')}`,
 		);
 		newline();
-		context.exit(0);
-	}
-
-	if (context.shouldSkipInstall) {
-		log(
-			'\n' +
-				' '.repeat(2) +
-				pc.green('◼') +
-				'  ' +
-				pc.green('--skip-install') +
-				' Skipping dependency installation.\n',
-		);
 	}
 
 	return response.proceed;

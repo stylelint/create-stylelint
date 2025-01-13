@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { lookup } from 'node:dns/promises';
 import { URL } from 'node:url';
-import { log } from '../output/format.js';
+import { log } from '$/output/format.js';
 
 /**
  * Retrieves the HTTPS proxy configuration either from env variables or npm config.

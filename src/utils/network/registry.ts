@@ -1,7 +1,7 @@
 import detectPackageManager from 'preferred-pm';
-import pc from 'picocolors';
-import { shell } from '../output/shell.js';
-import { log } from '../output/format.js';
+import { red } from 'picocolors';
+import { shell } from '$/output/shell.js';
+import { log } from '$/output/format.js';
 
 const versionCache = new Map<string, string>();
 
@@ -9,18 +9,20 @@ export async function resolvePackageVersion(packageName: string): Promise<string
 	if (versionCache.has(packageName)) {
 		return versionCache.get(packageName)!;
 	}
+
 	try {
 		const registry = await detectNpmRegistry();
 		const response = await fetch(`${registry}/${packageName}/latest`);
 		if (!response.ok) throw new Error(`Failed to fetch version for ${packageName}`);
 		const data = await response.json();
+		const version = data.version;
 		versionCache.set(packageName, data.version);
-		return data.version;
+		return version;
 	} catch (error) {
-		log(
-			pc.yellow(`Failed to fetch version for ${packageName}. Using "latest".\n`),
+		log(red(`Failed to fetch version for ${packageName}: ${(error as Error).message}\n`));
+		throw new Error(
+			`Unable to resolve version for ${packageName}. Please check your network connection.`,
 		);
-		return 'latest';
 	}
 }
 

@@ -1,33 +1,25 @@
-import type { PackageManager } from '../utils/package/helpers.js';
-import type { Context } from '../actions/context.js';
-import pc from 'picocolors';
-import { log, newline } from '../utils/output/format.js';
-import { handlePromptCancel, logDryRunSkipped } from '../utils/prompts.js';
-
-export function determinePackageManagerFromFlags(context: Context): PackageManager | null {
-	return context['--use-npm']
-		? 'npm'
-		: context['--use-pnpm']
-		  ? 'pnpm'
-		  : context['--use-yarn']
-		    ? 'yarn'
-		    : context['--use-bun']
-		      ? 'bun'
-		      : 'npm';
-}
+import type { PackageManager } from '$/package/helpers.js';
+import type { Context } from '$/actions/context.js';
+import { yellow, red, green } from 'picocolors';
+import { log, newline } from '$/output/format.js';
 
 export async function promptPackageManager(context: Context): Promise<PackageManager> {
-	let flagPM: PackageManager | null = null;
-	if (context['--use-npm']) flagPM = 'npm';
-	if (context['--use-pnpm']) flagPM = 'pnpm';
-	if (context['--use-yarn']) flagPM = 'yarn';
-	if (context['--use-bun']) flagPM = 'bun';
+	const selectedManagerFromFlags = context.packageManager;
 
-	if (flagPM) {
-		context.prompt.override({ packageManager: flagPM });
+	if (selectedManagerFromFlags) {
+		context.prompt.override({ packageManager: selectedManagerFromFlags });
+
+		log(
+			`${green(
+				'✔',
+			)} Select the package manager you'd like to use: » ${selectedManagerFromFlags} (--use-${selectedManagerFromFlags})`,
+		);
+		newline();
+
+		return selectedManagerFromFlags;
 	}
 
-	const defaultPM = context.pkgManager || 'npm';
+	const defaultPackageManager = context.packageManager || 'npm';
 	const response = await context.prompt(
 		{
 			type: 'select',
@@ -39,27 +31,22 @@ export async function promptPackageManager(context: Context): Promise<PackageMan
 				{ title: 'yarn', value: 'yarn' },
 				{ title: 'bun', value: 'bun' },
 			],
-			initial: ['npm', 'pnpm', 'yarn', 'bun'].indexOf(defaultPM),
+			initial: ['npm', 'pnpm', 'yarn', 'bun'].indexOf(defaultPackageManager),
 		},
 		{
-			onCancel: () => handlePromptCancel(context),
+			onCancel: () => {
+				newline();
+				log(yellow('Operation cancelled by user'));
+				context.exit(0);
+			},
 		},
 	);
 
 	if (!response.packageManager) {
 		newline();
-		log(pc.red('Package manager selection cancelled.'));
+		log(red('Package manager selection cancelled.'));
 		newline();
 		context.exit(1);
-	}
-
-	if (flagPM) {
-		log(
-			`${pc.green(
-				'✔',
-			)} Select the package manager you'd like to use: » ${flagPM} (--use-${flagPM})`,
-		);
-		newline();
 	}
 
 	return response.packageManager;

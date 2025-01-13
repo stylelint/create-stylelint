@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "checkJs": true,
+    "esModuleInterop": true,
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": false,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedParameters": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": false,
+    "strict": true,
+    "target": "ES2022",
+    "baseUrl": ".",
+    "paths": {
+      "$/*": ["./*"],
+      "$/src/*": ["./src/*"],
+			"$/actions/*": ["./src/actions/*"], 
+			"$/fs/*": ["./src/utils/fs/*"], 
+			"$/network/*": ["./src/utils/network/*"],
+			"$/output/*": ["./src/utils/output/*"], 
+			"$/package/*": ["./src/utils/package/*"],
+			"$/prompts/*": ["./src/prompts/*"], 
+			"$/test/*": ["./test/*"], 
+			"$/utils/*": ["./src/utils/*"],
+    }
+  }
+}
