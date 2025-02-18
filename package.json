@@ -32,12 +32,9 @@
     "create-stylelint.mjs"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "build:esbuild": "node esbuild.config.js",
+    "build": "node esbuild.config.js",
     "clean": "git clean -xdf dist",
     "type-check": "concurrently \"npm run type-check:src\" \"npm run type-check:test\"",
-    "type-check:src": "tsc -p tsconfig.json --noEmit",
-    "type-check:test": "tsc -p tsconfig.test.json --noEmit",
     "start": "node create-stylelint.mjs",
     "format": "prettier . --write --cache",
     "lint": "concurrently --kill-others-on-fail \"npm run lint:formatting\" \"npm run lint:js\" \"npm run lint:md\" \"npm run lint:packagejson\" \"npm run lint:types\"",
@@ -64,20 +61,20 @@
     "arg": "^5.0.2",
     "cosmiconfig": "^9.0.0",
     "ora": "^8.1.1",
+    "package-manager-detector": "^0.2.8",
     "picocolors": "^1.1.1",
-    "preferred-pm": "^4.0.0",
     "prompts": "^2.4.2",
-    "semver": "^7.6.3",
-    "terminal-link": "^3.0.0"
+    "tinyexec": "^0.3.2",
+    "validate-npm-package-name": "^6.0.0"
   },
   "devDependencies": {
     "@stylelint/npm-package-json-lint-config": "^5.1.0",
     "@stylelint/prettier-config": "^3.0.0",
     "@stylelint/remark-preset": "^5.1.1",
     "@types/prompts": "^2.4.9",
-    "@types/semver": "^7.5.8",
-    "@types/which-pm-runs": "^1.0.2",
+    "@types/validate-npm-package-name": "^4.0.2",
     "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/eslint-plugin": "^1.1.25",
     "concurrently": "^9.1.2",
     "esbuild": "0.24.2",
     "eslint": "^9.16.0",
@@ -86,6 +83,7 @@
     "np": "^10.1.0",
     "remark-cli": "^12.0.1",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.22.0",
     "vitest": "^2.1.6"
   },
   "engines": {

@@ -1,25 +1,21 @@
-import type { PackageManager } from '$/package/helpers.js';
-import type { Context } from '$/actions/context.js';
-import { yellow, red, green } from 'picocolors';
-import { log, newline } from '$/output/format.js';
+import { blue, bold, green, yellow } from 'picocolors';
 
-export async function promptPackageManager(context: Context): Promise<PackageManager> {
-	const selectedManagerFromFlags = context.packageManager;
+import { log, logAction, newline } from '../utils/logger.js';
+import type { Context } from '../actions/context.js';
+import type { PackageManager } from '../utils/package-utils.js';
 
-	if (selectedManagerFromFlags) {
-		context.prompt.override({ packageManager: selectedManagerFromFlags });
+export async function getPackageManagerConfirmation(context: Context): Promise<PackageManager> {
+	const selectedPM = context.packageManager;
 
-		log(
-			`${green(
-				'✔',
-			)} Select the package manager you'd like to use: » ${selectedManagerFromFlags} (--use-${selectedManagerFromFlags})`,
-		);
+	if (selectedPM) {
+		context.prompt.override({ packageManager: selectedPM });
+		log(`${green('✔')} Selected package manager: ${selectedPM} (--use-${selectedPM})`);
 		newline();
 
-		return selectedManagerFromFlags;
+		return selectedPM;
 	}
 
-	const defaultPackageManager = context.packageManager || 'npm';
+	const defaultPackageManager = context.packageManager ?? 'npm';
 	const response = await context.prompt(
 		{
 			type: 'select',
@@ -30,23 +26,24 @@ export async function promptPackageManager(context: Context): Promise<PackageMan
 				{ title: 'pnpm', value: 'pnpm' },
 				{ title: 'yarn', value: 'yarn' },
 				{ title: 'bun', value: 'bun' },
+				{ title: 'deno', value: 'deno' },
 			],
-			initial: ['npm', 'pnpm', 'yarn', 'bun'].indexOf(defaultPackageManager),
+			initial: ['npm', 'pnpm', 'yarn', 'bun', 'deno'].indexOf(defaultPackageManager),
 		},
 		{
 			onCancel: () => {
 				newline();
-				log(yellow('Operation cancelled by user'));
+				log(`${yellow('⚠')} ${bold('Operation cancelled')}`);
+				log(`${green('❯')} You can either:`);
+				log(`  1. Rerun with ${blue('--help')} for options`);
+				log(`  2. Use flags like ${blue('--use-npm')} or ${blue('--use-pnpm')}`);
 				context.exit(0);
 			},
 		},
 	);
 
-	if (!response.packageManager) {
-		newline();
-		log(red('Package manager selection cancelled.'));
-		newline();
-		context.exit(1);
+	if (context.isDryRun) {
+		logAction('--dry-run', 'Skipping package manager selection');
 	}
 
 	return response.packageManager;

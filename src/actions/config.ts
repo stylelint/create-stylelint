@@ -1,94 +1,89 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { bgMagenta, magenta, white, gray, cyan, green, red, bgRed, dim } from 'picocolors';
+import { bgMagenta, bold, cyan, gray, magenta, white } from 'picocolors';
+import { log, logAction, newline } from '../utils/logger.js';
+import { Context } from './context.js';
+import { cosmiconfig } from 'cosmiconfig';
+import { createBox } from '../utils/terminal-box.js';
+import { getConfigConfirmation } from '../prompts/config.js';
 import ora from 'ora';
-import { cosmiconfigSync } from 'cosmiconfig';
-import { Context } from '$/actions/context.js';
-import { createBox, log, newline } from '$/output/format.js';
-import { promptConfig } from '$/prompts/config.js';
+import process from 'node:process';
 
-const DEFAULT_STYLELINT_CONFIG_CONTENT = `export default {
+const CONFIG_FILE = 'stylelint.config.mjs';
+const DEFAULT_CONFIG_CONTENT = `export default {
   extends: ['stylelint-config-standard']
 };`;
+const INFO_PADDING = '  ';
 
-type ConfigResult = { filepath: string; exists: boolean } | null;
+async function findExistingConfig(): Promise<string | null> {
+	const configPath = path.join(process.cwd(), CONFIG_FILE);
 
-function findConfig(): ConfigResult {
-	const explorer = cosmiconfigSync('stylelint');
-	const result = explorer.search();
-	return result ? { filepath: result.filepath, exists: true } : null;
+	try {
+		await fs.access(configPath);
+
+		return configPath;
+	} catch {
+		const explorer = cosmiconfig('stylelint');
+		const result = await explorer.search();
+
+		return result?.filepath ?? null;
+	}
 }
 
-async function writeConfig(configPath: string, content: string): Promise<void> {
-	await fs.writeFile(configPath, content, 'utf8');
-}
-
-function showConfig(configContent: string): void {
+function displayConfigPreview(): void {
 	newline();
 	log(
-		`${' '.repeat(2)}${bgMagenta(white(' INFO '))}${' '.repeat(8)}${magenta(
+		`${INFO_PADDING}${bgMagenta(white(' INFO '))}${' '.repeat(8)}${magenta(
 			'Creating Stylelint configuration file...',
 		)}`,
 	);
 	log(`${' '.repeat(16)}The following configuration will be added to your project:`);
 	newline();
 
-	const fileName = 'stylelint.config.mjs';
-	const contentLines = configContent.split('\n');
+	const configLines = DEFAULT_CONFIG_CONTENT.split('\n');
 
 	log(
-		createBox(contentLines, {
-			fileName,
+		`${createBox(configLines, {
+			fileName: CONFIG_FILE,
 			fileNameColor: cyan,
 			borderColor: gray,
 			textColor: white,
-		}) + '\n',
+		})}\n`,
 	);
 }
 
-async function createConfig(context: Context, configPath: string): Promise<void> {
+export async function setupStylelintConfig(context: Context): Promise<void> {
+	if (!context.isDryRun) {
+		const existingConfig = await findExistingConfig();
+
+		if (existingConfig) {
+			log(
+				`${bold('Oops! Configuration file already exists')}\n\n` +
+					`${gray('We found:')} ${cyan(existingConfig)}\n\n` +
+					`${white('What to do next?')}\n` +
+					`${magenta('›')} ${white('Rename the existing file (e.g. "stylelint.config.old")')}\n` +
+					`${magenta('›')} ${white('Or delete it if no longer needed')}\n\n` +
+					`${white('Then run this command again to create a new config!')}\n\n` +
+					`${gray('🔍 Want to preview changes without writing files? Try')} ${cyan('--dry-run')}`,
+			);
+			context.exit(1);
+		}
+	}
+
+	displayConfigPreview();
+
+	const configPath = path.join(process.cwd(), CONFIG_FILE);
+
+	if (!(await getConfigConfirmation(context))) return;
+
 	if (context.isDryRun) {
-		log(
-			'\n' +
-				' '.repeat(2) +
-				green('◼') +
-				'  ' +
-				green('--dry-run') +
-				` Skipping configuration file creation.\n`,
-		);
+		logAction('--dry-run', 'Skipping configuration file creation');
+
 		return;
 	}
 
-	const spinner = ora('Creating Stylelint configuration file...').start();
+	const spinner = ora('Creating Stylelint configuration...').start();
 
-	try {
-		await writeConfig(configPath, DEFAULT_STYLELINT_CONFIG_CONTENT);
-		spinner.succeed(`Successfully created configuration file: ${cyan('stylelint.config.mjs')}`);
-	} catch (error) {
-		spinner.fail(`Failed to create configuration file`);
-		log(dim('Please check your file permissions and try again.\n'));
-		context.exit(1);
-	}
-}
-
-export async function setupConfig(context: Context): Promise<void> {
-	const existingConfig = findConfig();
-	if (existingConfig?.exists) {
-		log(
-			`${' '.repeat(2)}${bgRed(white(' ERROR '))}${' '.repeat(7)}${red(
-				`A Stylelint configuration already exists: ${existingConfig.filepath}`,
-			)}`,
-		);
-		newline();
-		context.exit(1);
-	}
-
-	showConfig(DEFAULT_STYLELINT_CONFIG_CONTENT);
-
-	const configPath = path.join(process.cwd(), 'stylelint.config.mjs');
-	const proceed = await promptConfig(context, configPath);
-
-	if (proceed) {
-		await createConfig(context, configPath);
-	}
+	await fs.writeFile(configPath, DEFAULT_CONFIG_CONTENT, 'utf-8');
+	spinner.succeed(`${cyan(CONFIG_FILE)} was added to your project`);
 }

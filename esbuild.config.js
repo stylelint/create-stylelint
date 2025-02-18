@@ -1,4 +1,5 @@
 import esbuild from 'esbuild';
+import process from 'node:process';
 
 esbuild
 	.build({
@@ -11,11 +12,11 @@ esbuild
 			'arg',
 			'cosmiconfig',
 			'ora',
+			'package-manager-detector',
 			'picocolors',
-			'preferred-pm',
 			'prompts',
-			'semver',
-			'terminal-link',
+			'tinyexec',
+			'validate-npm-package-name',
 		],
 	})
 	.catch(() => process.exit(1));
