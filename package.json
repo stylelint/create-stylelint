@@ -1,10 +1,13 @@
 {
   "name": "create-stylelint",
   "version": "0.5.0",
-  "description": "The npm init script for Stylelint.",
+  "description": "The initialization script for Stylelint.",
   "keywords": [
     "stylelint",
-    "npm init"
+    "create",
+    "init",
+    "cli",
+    "setup"
   ],
   "repository": "stylelint/create-stylelint",
   "funding": [
@@ -19,16 +22,22 @@
   ],
   "license": "MIT",
   "author": "stylelint",
+  "type": "module",
   "main": "create-stylelint.mjs",
   "bin": {
     "create-stylelint": "./create-stylelint.mjs"
   },
   "files": [
-    "src"
+    "dist",
+    "create-stylelint.mjs"
   ],
   "scripts": {
+    "build": "node esbuild.config.js",
+    "clean": "git clean -xdf dist",
+    "type-check": "concurrently \"npm run type-check:src\" \"npm run type-check:test\"",
+    "start": "node create-stylelint.mjs",
     "format": "prettier . --write --cache",
-    "lint": "npm-run-all --parallel --continue-on-error lint:*",
+    "lint": "concurrently --kill-others-on-fail \"npm run lint:formatting\" \"npm run lint:js\" \"npm run lint:md\" \"npm run lint:packagejson\" \"npm run lint:types\"",
     "lint:formatting": "prettier . --check --cache",
     "lint:js": "eslint",
     "lint:md": "remark . --quiet --frail",
@@ -49,25 +58,32 @@
     ]
   },
   "dependencies": {
+    "arg": "^5.0.2",
     "cosmiconfig": "^9.0.0",
-    "execa": "^9.5.1",
     "ora": "^8.1.1",
+    "package-manager-detector": "^0.2.8",
     "picocolors": "^1.1.1",
-    "semver": "^7.6.3",
-    "strip-indent": "^4.0.0",
-    "which-pm-runs": "^1.1.0"
+    "prompts": "^2.4.2",
+    "tinyexec": "^0.3.2",
+    "validate-npm-package-name": "^6.0.0"
   },
   "devDependencies": {
     "@stylelint/npm-package-json-lint-config": "^5.1.0",
     "@stylelint/prettier-config": "^3.0.0",
     "@stylelint/remark-preset": "^5.1.1",
-    "@types/which-pm-runs": "^1.0.2",
+    "@types/prompts": "^2.4.9",
+    "@types/validate-npm-package-name": "^4.0.2",
+    "@vitest/coverage-v8": "^2.1.8",
+    "@vitest/eslint-plugin": "^1.1.25",
+    "concurrently": "^9.1.2",
+    "esbuild": "0.24.2",
     "eslint": "^9.16.0",
     "eslint-config-stylelint": "^23.0.0",
+    "memfs": "^4.15.3",
     "np": "^10.1.0",
-    "npm-run-all": "^4.1.5",
     "remark-cli": "^12.0.1",
     "typescript": "^5.7.2",
+    "typescript-eslint": "^8.22.0",
     "vitest": "^2.1.6"
   },
   "engines": {

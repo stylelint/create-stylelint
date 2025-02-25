@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`showHelp > should match snapshot 1`] = `
+"Usage: create-stylelint [-v | --version] [-h | --help] [--dry-run] [--no-install | --no-color]
+                        [--use-npm | --use-pnpm | --use-yarn | --use-bun | --use-deno]
+
+Options:
+  --use-npm        Use npm as package manager
+  --use-pnpm       Use pnpm as package manager
+  --use-yarn       Use yarn as package manager
+  --use-bun        Use bun as package manager
+  --use-deno       Use deno as package manager
+
+  --dry-run        Preview changes without applying them
+  --no-install     Skip dependency installation
+  --no-color       Disable color
+
+  -h, --help       Show this help message
+  -v, --version    Show version information
+
+Examples:
+  create-stylelint
+  create-stylelint --use-npm --no-install
+
+Need help? https://github.com/stylelint/create-stylelint
+
+"
+`;

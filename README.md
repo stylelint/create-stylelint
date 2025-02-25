@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/create-stylelint)](https://www.npmjs.com/package/create-stylelint)
 [![Testing](https://github.com/stylelint/create-stylelint/actions/workflows/testing.yml/badge.svg)](https://github.com/stylelint/create-stylelint/actions/workflows/testing.yml)
 
-The [`npm init`](https://docs.npmjs.com/cli/v9/commands/npm-init) script for [Stylelint](https://github.com/stylelint/stylelint).
+The initialization script for [Stylelint](https://github.com/stylelint/stylelint).
 
 ## Usage
 
