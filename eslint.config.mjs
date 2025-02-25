@@ -18,7 +18,11 @@ export default [
 
 	{
 		rules: {
-			'n/no-process-exit': 'off',
+						'n/no-process-exit': 'off',
+						"n/no-unsupported-features/node-builtins": ["error", {
+										"version": ">=18.12.0",
+										"ignores": ["fetch"]
+						}]
 		},
-	},
+},
 ];

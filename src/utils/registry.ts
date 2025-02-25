@@ -9,7 +9,6 @@ async function fetchFromNpmRegistry(packageName: string): Promise<string> {
 	try {
 		const registry = await detectPackageRegistry();
 		const encodedName = encodeURIComponent(packageName).replace(/^%40/, '@');
-		// eslint-disable-next-line n/no-unsupported-features/node-builtins
 		const response = await fetch(`${registry}/${encodedName}/latest`);
 
 		if (!response.ok) {
