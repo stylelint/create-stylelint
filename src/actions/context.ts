@@ -44,11 +44,11 @@ export async function createContext(originalArgv: string[]): Promise<Context> {
 	);
 
 	const packageManagerFlags = {
-		'--use-npm': flags['--use-npm'],
-		'--use-yarn': flags['--use-yarn'],
-		'--use-pnpm': flags['--use-pnpm'],
-		'--use-bun': flags['--use-bun'],
-		'--use-deno': flags['--use-deno'],
+		'--use-npm': flags['--use-npm'] ?? false,
+		'--use-yarn': flags['--use-yarn'] ?? false,
+		'--use-pnpm': flags['--use-pnpm'] ?? false,
+		'--use-bun': flags['--use-bun'] ?? false,
+		'--use-deno': flags['--use-deno'] ?? false,
 	};
 
 	return {
@@ -58,7 +58,7 @@ export async function createContext(originalArgv: string[]): Promise<Context> {
 		isDryRun: Boolean(flags['--dry-run']),
 		shouldSkipInstall: Boolean(flags['--no-install']),
 		cwd: new URL(`${pathToFileURL(process.cwd())}/`),
-		packageManager: await getPackageManager(packageManagerFlags),
+		packageManager: getPackageManager(packageManagerFlags),
 		exit: (code) => process.exit(code),
 	};
 }

@@ -1,43 +1,40 @@
 import { blue, dim } from 'picocolors';
 import { log } from '../utils/logger.js';
 
+const INDENT = '  ';
+const PM_OPTIONS = ['npm', 'pnpm', 'yarn', 'bun', 'deno'] as const;
+
 export function showHelp(): void {
-	const INDENT = {
-		SECTION: ' '.repeat(2),
-		OPTION: ' '.repeat(2),
-	};
+    const usageLine = 'Usage: create-stylelint [-v | --version] [-h | --help] [--dry-run] [--no-install | --no-color]';
+    const pmOptions = PM_OPTIONS.map(pm => `--use-${pm}`).join(' | ');
 
-	const SPACES = {
-		// Alignment for the second line:
-		// Calculated as:
-		// - "Usage: "          =  7 chars
-		// - "create-stylelint" = 15 chars
-		// - trailing space     =  2 spaces
-		// Total                = 24 spaces
-		SECOND_LINE: ' '.repeat(24),
-	};
-
-log(`Usage: create-stylelint [-v | --version] [-h | --help] [--dry-run] [--no-install | --no-color]
-${SPACES.SECOND_LINE}[--use-npm | --use-pnpm | --use-yarn | --use-bun | --use-deno]
+log(`${usageLine}
+${' '.repeat(24)}[${pmOptions}]
 
 Options:
-${INDENT.OPTION}--use-npm         ${dim('Use npm as package manager')}
-${INDENT.OPTION}--use-pnpm        ${dim('Use pnpm as package manager')}
-${INDENT.OPTION}--use-yarn        ${dim('Use yarn as package manager')}
-${INDENT.OPTION}--use-bun         ${dim('Use bun as package manager')}
-${INDENT.OPTION}--use-deno        ${dim('Use deno as package manager')}
+${createPMOptions()}
 
-${INDENT.OPTION}--dry-run         ${dim('Preview changes without applying them')}
-${INDENT.OPTION}--no-install      ${dim('Skip dependency installation')}
-${INDENT.OPTION}--no-color        ${dim('Disable color')}
+${createOption('--dry-run', 'Preview changes without applying them')}
+${createOption('--no-install', 'Skip dependency installation')}
+${createOption('--no-color', 'Disable color')}
 
-${INDENT.OPTION}-h, --help        ${dim('Show this help message')}
-${INDENT.OPTION}-v, --version     ${dim('Show version information')}
+${createOption('-h, --help', 'Show this help message')}
+${createOption('-v, --version', 'Show version information')}
 
 Examples:
-${INDENT.OPTION}create-stylelint
-${INDENT.OPTION}create-stylelint --use-npm --no-install
+${INDENT}create-stylelint
+${INDENT}create-stylelint --use-npm --no-install
 
 ${dim('Need help?')} ${blue('https://github.com/stylelint/create-stylelint')}
 `);
+}
+
+function createOption(flags: string, description: string) {
+    return `${INDENT}${flags.padEnd(16)} ${dim(description)}`;
+}
+
+function createPMOptions() {
+    return PM_OPTIONS.map(pm =>
+        createOption(`--use-${pm}`, `Use ${pm} as package manager`)
+    ).join('\n');
 }

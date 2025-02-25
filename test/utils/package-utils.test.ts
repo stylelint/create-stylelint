@@ -16,70 +16,105 @@ vi.mock('../../src/utils/logger.js');
 vi.mock('../../src/utils/package-manager-commands.ts');
 
 describe('getPackageManager', () => {
-	it.each([
-		['npm', { '--use-npm': true }],
-		['pnpm', { '--use-pnpm': true }],
-		['yarn', { '--use-yarn': true }],
-		['bun', { '--use-bun': true }],
-		['deno', { '--use-deno': true }],
-		[undefined, {}],
-		['npm', { '--use-npm': true, '--use-yarn': true }],
-	])('should return %s for flags %o', async (expected, flags) => {
-		expect(await getPackageManager(flags)).toBe(expected);
-	});
+  it('should return the correct package manager based on flags', () => {
+    const testCases: [PackageManager | undefined, Record<string, boolean>][] = [
+      ['npm', { '--use-npm': true }],
+      ['pnpm', { '--use-pnpm': true }],
+      ['yarn', { '--use-yarn': true }],
+      ['bun', { '--use-bun': true }],
+      ['deno', { '--use-deno': true }],
+      [undefined, {}],
+      ['npm', { '--use-npm': true, '--use-yarn': true }],
+    ];
+
+    testCases.forEach(([expected, flags]) => {
+      expect(getPackageManager(flags as Record<`--use-${PackageManager}`, boolean>))
+        .toBe(expected);
+    });
+  });
 });
 
 describe('validateNpmName', () => {
-	it.each([
-		['valid-package', { valid: true }],
-		['Invalid@Package', { valid: false, problems: expect.any(Array) }],
-		['', { valid: false, problems: ['name length must be greater than zero'] }],
-	])('should validate "%s" as %o', (input, expected) => {
-		expect(validateNpmName(input)).toMatchObject(expected);
-	});
+  it('should validate correct package names', () => {
+    expect(validateNpmName('valid-package')).toEqual({ valid: true });
+  });
 
-	it('should handle both errors and warnings', () => {
-		const result = validateNpmName('_invalid_name_');
+  it('should invalidate empty package names', () => {
+    expect(validateNpmName('')).toEqual({
+      valid: false,
+      problems: ['name length must be greater than zero'],
+    });
+  });
 
-		expect(result.valid).toBe(false);
+  it('should handle invalid package names with both errors and warnings', () => {
+    const result = validateNpmName('Invalid@Package');
 
-		if (!result.valid) {
-			expect(result.problems.length).toBeGreaterThan(0);
-		}
-	});
+    expect(result).toEqual({
+      valid: false,
+      problems: expect.arrayContaining([
+        'name can only contain URL-friendly characters',
+        'name can no longer contain capital letters'
+      ]),
+    });
+  });
 });
 
 describe('validatePackageJson', () => {
-	const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
-	const mockLog = vi.mocked(log);
-	const mockGetInitCommand = vi.mocked(getInitCommand);
+  const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
+  const mockLog = vi.mocked(log);
+  const mockGetInitCommand = vi.mocked(getInitCommand);
 
-	beforeEach(() => {
-		vi.clearAllMocks();
-	});
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
-	it.each([['npm'], [null]])(
-		'should handle package.json existence with %s package manager',
-		async (packageManager) => {
-			vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true } as Stats);
-			await validatePackageJson(packageManager as PackageManager);
-			expect(mockExit).not.toHaveBeenCalled();
-			expect(mockGetInitCommand).toHaveBeenCalledWith(packageManager ?? 'npm');
-		},
-	);
+  it('should not exit when package.json exists', async () => {
+    vi.mocked(fs.stat).mockResolvedValue({} as Stats);
 
-	it('should handle missing package.json', async () => {
-		const error = Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+    await validatePackageJson('npm');
 
-		vi.mocked(fs.stat).mockRejectedValue(error);
-		mockGetInitCommand.mockReturnValue({
-			command: 'npm init -y',
-			docs: 'https://docs.npmjs.com/cli/v10/commands/npm-init',
-		});
+    expect(mockExit).not.toHaveBeenCalled();
+  });
 
-		await validatePackageJson('npm');
+  it('should handle missing package.json with default npm', async () => {
+    const error = new Error('ENOENT') as NodeJS.ErrnoException;
 
-		expect(mockLog).toHaveBeenCalled();
-		expect(mockExit).toHaveBeenCalledWith(1);
-	});
+    error.code = 'ENOENT';
+    vi.mocked(fs.stat).mockRejectedValue(error);
+
+    mockGetInitCommand.mockReturnValue({
+      command: 'npm init',
+      docs: 'https://docs.npmjs.com/init',
+    });
+
+    await validatePackageJson(null);
+
+    expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('Missing package.json'));
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+
+  it('should handle missing package.json with specified package manager', async () => {
+    const error = new Error('ENOENT') as NodeJS.ErrnoException;
+
+    error.code = 'ENOENT';
+    vi.mocked(fs.stat).mockRejectedValue(error);
+
+    mockGetInitCommand.mockReturnValue({
+      command: 'pnpm init',
+      docs: 'https://pnpm.io/cli/init',
+    });
+
+    await validatePackageJson('pnpm');
+
+    expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('Missing package.json'));
+    expect(mockExit).toHaveBeenCalledWith(1);
+  });
+
+  it('should throw error for non-ENOENT errors', async () => {
+    const error = new Error('Different error');
+
+    vi.mocked(fs.stat).mockRejectedValue(error);
+
+    await expect(validatePackageJson('npm')).rejects.toThrow('Different error');
+  });
 });

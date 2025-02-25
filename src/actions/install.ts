@@ -11,9 +11,6 @@ import { getInstallConfirmation } from '../prompts/install.js';
 import { resolvePackageVersion } from '../utils/registry.js';
 
 const REQUIRED_PACKAGES = ['stylelint', 'stylelint-config-standard'];
-const INFO_PREFIX = `${' '.repeat(2)}${bgMagenta(white(' INFO '))}${' '.repeat(8)}`;
-const COMMAND_INFO_TEXT = magenta('Stylelint will run the following command:');
-const DEPENDENCY_INSTALL_TEXT = 'Installing the necessary Stylelint dependencies...';
 
 export async function installDependencies(context: Context): Promise<void> {
 	if (context.shouldSkipInstall) {
@@ -22,24 +19,24 @@ export async function installDependencies(context: Context): Promise<void> {
 		return;
 	}
 
-	const resolvedPackages = await Promise.all(
-		REQUIRED_PACKAGES.map(async (packageName) => ({
-			packageName,
-			requestedVersion: await resolvePackageVersion(packageName),
+	const packageVersions = await Promise.all(
+		REQUIRED_PACKAGES.map(async (pkg) => ({
+			packageName: pkg,
+			requestedVersion: await resolvePackageVersion(pkg),
 		})),
 	);
 
-	const installCommand = getInstallCommand(context.packageManager!, resolvedPackages);
+	const installCommand = getInstallCommand(context.packageManager!, packageVersions);
+	const infoPrefix = `${'  '}${bgMagenta(white(' INFO '))}${' '.repeat(8)}`;
 
+	// Display command preview
 	newline();
-	log(`${INFO_PREFIX}${COMMAND_INFO_TEXT}`);
-	log(`${' '.repeat(16)}If you skip this step, you can always run it yourself later`);
+	log(`${infoPrefix}${magenta('Stylelint will run the following command:')}`);
+	log(`${'  '.repeat(8)}If you skip this step, you can always run it yourself later`);
 	newline();
 	log(`${createBox([installCommand])}\n`);
 
-	const shouldProceed = await getInstallConfirmation(context);
-
-	if (!shouldProceed) return;
+	if (!(await getInstallConfirmation(context))) return;
 
 	if (context.isDryRun) {
 		logAction('--dry-run', 'Skipping dependency installation');
@@ -47,17 +44,15 @@ export async function installDependencies(context: Context): Promise<void> {
 		return;
 	}
 
-	const installationSpinner = ora(DEPENDENCY_INSTALL_TEXT).start();
+	const spinner = ora('Installing the necessary Stylelint dependencies...').start();
 
 	try {
-		const [...args] = installCommand.split(' ');
+		const [command, ...args] = installCommand.split(' ');
 
-		await x(context.packageManager!, args, {
-			nodeOptions: { cwd: process.cwd() },
-		});
-		installationSpinner.succeed('Successfully installed dependencies');
+		await x(command!, args, { nodeOptions: { cwd: process.cwd() } });
+		spinner.succeed('Successfully installed dependencies');
 	} catch (error) {
-		installationSpinner.fail(`Failed to install dependencies: ${(error as Error).message}`);
+		spinner.fail(`Failed to install dependencies: ${(error as Error).message}`);
 		log(dim('Please check your network connection and try again.\n'));
 		context.exit(1);
 	}

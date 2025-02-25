@@ -1,26 +1,32 @@
 import { stripVTControlCharacters } from 'node:util';
 
-const BOX_SYMBOLS = {
-	topLeft: '╭',
-	topRight: '╮',
-	bottomLeft: '╰',
-	bottomRight: '╯',
+const BOX = {
+	corners: {
+		top: ['╭', '╮'],
+		bottom: ['╰', '╯'],
+	},
 	vertical: '│',
 	horizontal: '─',
 } as const;
 
 /**
- * Creates a box around the given content.
+ * Creates a text box around the given content.
  *
- * The process can be visualized like this:
+ * The generated box structure:
  *
- *     ┌────────────────────────┐  <- Top border created by `createBorder('top', ...)`
- *     │                        │  <- Vertical borders and padding added by `createPaddedLines(...)`
- *     │    Content Line 1      │  <- Content lines are processed and padded here
+ *     ╭────────────────────────╮  <- Top border (created by `createTopBorder(...)`)
+ *     │                        │  <- Empty padding line (added by `createContentLines(...)`)
+ *     │    Content Line 1      │  <- Content lines (processed and padded)
  *     │    Content Line 2      │
- *     │                        │
- *     └────────────────────────┘  <- Bottom border created by `createBorder('bottom', ...)`
+ *     │                        │  <- Empty padding line
+ *     ╰────────────────────────╯  <- Bottom border (created by `createBottomBorder(...)`)
  *
+ * If a filename is provided, it is included in the top border:
+ *
+ *     ╭─── my-file ────────────╮
+ *     │ Content Line 1         │
+ *     │ Content Line 2         │
+ *     ╰────────────────────────╯
  */
 function createBox(
 	content: string | string[],
@@ -35,80 +41,96 @@ function createBox(
 	const { borderColor = (x) => x, textColor = (x) => x, fileName, fileNameColor } = options;
 
 	if (fileNameColor && !fileName) {
-		throw new Error('fileNameColor requires fileName');
+		throw new Error('fileNameColor requires fileName to be specified');
 	}
 
-	const visibleLength = (str: string) => stripVTControlCharacters(str).length;
+	const measure = (str: string) => stripVTControlCharacters(str).length;
+	const lineLengths = lines.map(measure);
+	const maxLineLength = Math.max(...lineLengths);
+	const fileNameWidth = fileName ? measure(fileName) + 4 : 0; // +4 for spacing
+	const boxWidth = Math.max(maxLineLength, fileNameWidth);
 
-	const maxContentLength = Math.max(...lines.map((line) => visibleLength(line)));
-	const fileNameLength = fileName ? visibleLength(fileName) + 4 : 0;
-	const totalLength = Math.max(maxContentLength, fileNameLength);
-
-	const top = createBorder('top', totalLength, fileName, borderColor, fileNameColor);
-	const bottom = createBorder('bottom', totalLength, undefined, borderColor);
-	const paddedLines = createPaddedLines(lines, totalLength, borderColor, textColor);
-
-	return [top, ...paddedLines, bottom].join('\n');
+	return [
+		createTopBorder(boxWidth, fileName, borderColor, fileNameColor),
+		...createContentLines(lines, boxWidth, borderColor, textColor),
+		createBottomBorder(boxWidth, borderColor),
+	].join('\n');
 }
 
 /**
- * Creates a border (top or bottom) for the box.
+ * Creates the top border of the box.
  *
- * Examples:
- * Top border without filename:    ╭──────────────────────╮
+ * Example outputs:
  *
- * Top border with filename:       ╭─── my-file ──────────╮
- * Bottom border:                  ╰──────────────────────╯
+ * Without a filename:
+ *     ╭──────────────────────╮
+ *
+ * With a filename:
+ *     ╭─── my-file ──────────╮
  */
-function createBorder(
-	type: 'top' | 'bottom',
-	totalLength: number,
+function createTopBorder(
+	width: number,
 	fileName?: string,
 	borderColor: (text: string) => string = (x) => x,
 	fileNameColor?: (text: string) => string,
 ): string {
-	const [start, end] =
-		type === 'top'
-			? [BOX_SYMBOLS.topLeft, BOX_SYMBOLS.topRight]
-			: [BOX_SYMBOLS.bottomLeft, BOX_SYMBOLS.bottomRight];
+	const [start, end] = BOX.corners.top;
+	let middle = '';
 
-	let border = borderColor(start);
-
-	if (fileName && type === 'top') {
+	if (fileName) {
 		const cleanName = stripVTControlCharacters(fileName);
-		const visibleNameLength = cleanName.length;
 		const formattedName = fileNameColor ? fileNameColor(` ${fileName} `) : ` ${cleanName} `;
-		const remaining = Math.max(0, totalLength - visibleNameLength - 2);
 
-		border +=
-			borderColor(BOX_SYMBOLS.horizontal.repeat(2)) +
-			formattedName +
-			borderColor(BOX_SYMBOLS.horizontal.repeat(remaining));
+		const remainingSpace = Math.max(0, width - cleanName.length - 2);
+
+		middle = `${borderColor(BOX.horizontal.repeat(2))}${formattedName}${borderColor(BOX.horizontal.repeat(remainingSpace))}`;
 	} else {
-		border += borderColor(BOX_SYMBOLS.horizontal.repeat(totalLength + 2));
+		middle = borderColor(BOX.horizontal.repeat(width + 2));
 	}
 
-	return border + borderColor(end);
+	return borderColor(start) + middle + borderColor(end);
 }
 
 /**
- * Creates padded lines for the content with vertical borders.
+ * Creates the bottom border of the box.
  *
- * Example output for a line "Hello" with totalLength of 20:
- * │ Hello               │
+ * Example output:
+ *
+ * ╰──────────────────────╯
  */
-function createPaddedLines(
+function createBottomBorder(width: number, borderColor: (text: string) => string): string {
+	const [start, end] = BOX.corners.bottom;
+	const middle = borderColor(BOX.horizontal.repeat(width + 2));
+
+	return `${borderColor(start)}${middle}${borderColor(end)}`;
+}
+
+/**
+ * Creates the content lines inside the box, adding vertical borders and padding.
+ *
+ * Example output for a line "Hello" with width 20:
+ *     │ Hello               │
+ */
+function createContentLines(
 	lines: string[],
-	totalLength: number,
+	width: number,
 	borderColor: (text: string) => string,
 	textColor: (text: string) => string,
 ): string[] {
 	return lines.map((line) => {
 		const cleanLine = stripVTControlCharacters(line);
-		const padding = ' '.repeat(totalLength - cleanLine.length);
+		const padding = ' '.repeat(width - cleanLine.length);
 
-		return `${borderColor(BOX_SYMBOLS.vertical)} ${textColor(line + padding)} ${borderColor(BOX_SYMBOLS.vertical)}`;
+		return `${borderColor(BOX.vertical)} ${textColor(line)}${padding} ${borderColor(BOX.vertical)}`;
 	});
 }
 
-export { createBox, createBorder, createPaddedLines };
+/**
+ * This is the primary function intended for production use.
+ */
+export { createBox };
+
+/**
+ * These are exported for testing purposes only and should not be used directly in production.
+ */
+export { createTopBorder, createBottomBorder, createContentLines };

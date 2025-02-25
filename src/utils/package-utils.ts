@@ -1,67 +1,44 @@
 import { blue, bold, cyan, gray, underline, white } from 'picocolors';
+import fs from 'node:fs/promises';
 import { getInitCommand } from './package-manager-commands.js';
 import { log } from './logger.js';
-
-import * as path from 'node:path';
-import fs from 'node:fs/promises';
+import path from 'node:path';
 import process from 'node:process';
 import validate from 'validate-npm-package-name';
 
-export type PackageManager = 'npm' | 'pnpm' | 'yarn' | 'bun' | 'deno';
+const PM_OPTIONS = ['npm', 'pnpm', 'yarn', 'bun', 'deno'] as const;
 
-export async function getPackageManager(flags: {
-	'--use-npm'?: boolean;
-	'--use-pnpm'?: boolean;
-	'--use-yarn'?: boolean;
-	'--use-bun'?: boolean;
-	'--use-deno'?: boolean;
-}): Promise<PackageManager | undefined> {
-	return (['npm', 'pnpm', 'yarn', 'bun', 'deno'] as const).find((pm) => flags[`--use-${pm}`]);
-}
+export type PackageManager = (typeof PM_OPTIONS)[number];
 
-type ValidateNpmNameResult =
-	| {
-			valid: true;
-	  }
-	| {
-			valid: false;
-			problems: string[];
-	  };
+export const getPackageManager = (flags: Record<`--use-${PackageManager}`, boolean>) =>
+	PM_OPTIONS.find((pm) => flags[`--use-${pm}`]);
 
-export function validateNpmName(name: string): ValidateNpmNameResult {
-	const nameValidation = validate(name);
+export const validateNpmName = (name: string) => {
+	const { validForNewPackages, errors = [], warnings = [] } = validate(name);
 
-	if (nameValidation.validForNewPackages) {
-		return { valid: true };
-	}
+	return validForNewPackages
+		? { valid: true }
+		: { valid: false, problems: [...errors, ...warnings] };
+};
 
-	return {
-		valid: false,
-		problems: [...(nameValidation.errors || []), ...(nameValidation.warnings || [])],
-	};
-}
-
-export async function validatePackageJson(packageManager: PackageManager | null): Promise<void> {
-	const packageJsonPath = path.join(process.cwd(), 'package.json');
-	const defaultPackageManager = packageManager ?? 'npm';
-	const initConfig = getInitCommand(defaultPackageManager);
+export const validatePackageJson = async (pm: PackageManager | null) => {
+	const pkgPath = path.join(process.cwd(), 'package.json');
 
 	try {
-		await fs.stat(packageJsonPath);
+		await fs.stat(pkgPath);
 	} catch (error) {
-		const err = error as NodeJS.ErrnoException;
+		if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
 
-		if (err.code === 'ENOENT') {
-			log(
-				`${bold('Hold up! We need a package.json file')}\n\n` +
-					`${white("Let's create one with these simple steps:")}\n` +
-					`${cyan('1.')} Run ${bold(initConfig.command)}\n` +
-					`${cyan('2.')} Follow the prompts to create your package.json\n\n` +
-					`${gray('Need help?')}\n` +
-					`${white('Check out:')} ${underline(blue(initConfig.docs))}`,
-			);
+		const { command, docs } = getInitCommand(pm ?? 'npm');
 
-			process.exit(1);
-		}
+		log(
+			`${bold('Missing package.json')}\n\n` +
+				`${white('Create one with:')}\n` +
+				`${cyan('1.')} Run ${bold(command)}\n` +
+				`${cyan('2.')} Follow prompts\n\n` +
+				`${gray('Documentation:')} ${underline(blue(docs))}`,
+		);
+
+		process.exit(1);
 	}
-}
+};

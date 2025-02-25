@@ -1,42 +1,39 @@
 import { blue, bold, green, yellow } from 'picocolors';
-
 import { log, logAction, newline } from '../utils/logger.js';
 import type { Context } from '../actions/context.js';
-import type { PackageManager } from '../utils/package-utils.js';
+import { PackageManager } from '../utils/package-utils.js';
+
+const PM_OPTIONS = ['npm', 'pnpm', 'yarn', 'bun', 'deno'] as const;
 
 export async function getPackageManagerConfirmation(context: Context): Promise<PackageManager> {
-	const selectedPM = context.packageManager;
+	const checkmark = green('✔');
+	const warning = yellow('⚠');
+	const { packageManager: selectedPM } = context;
 
 	if (selectedPM) {
 		context.prompt.override({ packageManager: selectedPM });
-		log(`${green('✔')} Selected package manager: ${selectedPM} (--use-${selectedPM})`);
+		log(`${checkmark} Selected package manager: ${selectedPM} (--use-${selectedPM})`);
 		newline();
 
 		return selectedPM;
 	}
 
-	const defaultPackageManager = context.packageManager ?? 'npm';
-	const response = await context.prompt(
+	const defaultPM = context.packageManager ?? 'npm';
+	const { packageManager } = await context.prompt(
 		{
 			type: 'select',
 			name: 'packageManager',
 			message: "Select the package manager you'd like to use:",
-			choices: [
-				{ title: 'npm', value: 'npm' },
-				{ title: 'pnpm', value: 'pnpm' },
-				{ title: 'yarn', value: 'yarn' },
-				{ title: 'bun', value: 'bun' },
-				{ title: 'deno', value: 'deno' },
-			],
-			initial: ['npm', 'pnpm', 'yarn', 'bun', 'deno'].indexOf(defaultPackageManager),
+			choices: PM_OPTIONS.map((pm) => ({ title: pm, value: pm })),
+			initial: PM_OPTIONS.indexOf(defaultPM),
 		},
 		{
 			onCancel: () => {
 				newline();
-				log(`${yellow('⚠')} ${bold('Operation cancelled')}`);
-				log(`${green('❯')} You can either:`);
-				log(`  1. Rerun with ${blue('--help')} for options`);
-				log(`  2. Use flags like ${blue('--use-npm')} or ${blue('--use-pnpm')}`);
+				log(`${warning} ${bold('Operation cancelled')}
+${green('❯')} You can either:
+  1. Rerun with ${blue('--help')} for options
+  2. Use flags like ${PM_OPTIONS.map((pm) => blue(`--use-${pm}`)).join(' or ')}`);
 				context.exit(0);
 			},
 		},
@@ -46,5 +43,5 @@ export async function getPackageManagerConfirmation(context: Context): Promise<P
 		logAction('--dry-run', 'Skipping package manager selection');
 	}
 
-	return response.packageManager;
+	return packageManager;
 }

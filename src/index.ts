@@ -73,7 +73,7 @@ export async function main(): Promise<void> {
 			log(`create-stylelint v${version}`);
 			process.exit(0);
 		} catch (error) {
-			console.error('Failed to get version:', error instanceof Error ? error.message : error);
+			console.error(error instanceof Error ? error.message : String(error));
 			process.exit(1);
 		}
 	}

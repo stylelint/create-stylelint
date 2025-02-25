@@ -5,18 +5,18 @@ exports[`showHelp > should match snapshot 1`] = `
                         [--use-npm | --use-pnpm | --use-yarn | --use-bun | --use-deno]
 
 Options:
-  --use-npm         Use npm as package manager
-  --use-pnpm        Use pnpm as package manager
-  --use-yarn        Use yarn as package manager
-  --use-bun         Use bun as package manager
-  --use-deno        Use deno as package manager
+  --use-npm        Use npm as package manager
+  --use-pnpm       Use pnpm as package manager
+  --use-yarn       Use yarn as package manager
+  --use-bun        Use bun as package manager
+  --use-deno       Use deno as package manager
 
-  --dry-run         Preview changes without applying them
-  --no-install      Skip dependency installation
-  --no-color        Disable color
+  --dry-run        Preview changes without applying them
+  --no-install     Skip dependency installation
+  --no-color       Disable color
 
-  -h, --help        Show this help message
-  -v, --version     Show version information
+  -h, --help       Show this help message
+  -v, --version    Show version information
 
 Examples:
   create-stylelint
@@ -24,36 +24,5 @@ Examples:
 
 Need help? https://github.com/stylelint/create-stylelint
 
-"
-`;
-
-exports[`showHelp > should print full help message 1`] = `
-"  create-stylelint [--version] [-h | --help] [--use-npm] [--use-pnpm]
-    [--use-yarn] [--use-bun] [--dry-run] [--skip-install]
-    [--no-color] [--no-input]
-
-  Configuration options:
-    -h, --help        Show this help message and exit
-    --version         Display version information
-    --no-color        Disable colored output
-    --no-input        Disable interactive prompts
-
-  Package manager selection:
-    --use-npm         Use npm as package manager
-    --use-pnpm        Use pnpm as package manager
-    --use-yarn        Use yarn as package manager
-    --use-bun         Use bun as package manager
-
-  Installation options:
-    --dry-run         Show what would be done without making changes
-    --skip-install    Skip dependency installation step
-
-  Examples:
-    create-stylelint
-    create-stylelint --use-pnpm --dry-run
-    create-stylelint --no-input --use-npm
-
-  For more information, visit:
-    GitHub Repository: https://github.com/stylelint/create-stylelint
 "
 `;

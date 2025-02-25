@@ -13,43 +13,37 @@ const CONFIG_FILE = 'stylelint.config.mjs';
 const DEFAULT_CONFIG_CONTENT = `export default {
   extends: ['stylelint-config-standard']
 };`;
-const INFO_PADDING = '  ';
 
 async function findExistingConfig(): Promise<string | null> {
-	const configPath = path.join(process.cwd(), CONFIG_FILE);
+	const localConfigPath = path.join(process.cwd(), CONFIG_FILE);
 
 	try {
-		await fs.access(configPath);
+		await fs.access(localConfigPath);
 
-		return configPath;
+		return localConfigPath;
 	} catch {
-		const explorer = cosmiconfig('stylelint');
-		const result = await explorer.search();
+		const { filepath } = (await cosmiconfig('stylelint').search()) || {};
 
-		return result?.filepath ?? null;
+		return filepath ?? null;
 	}
 }
 
 function displayConfigPreview(): void {
 	newline();
 	log(
-		`${INFO_PADDING}${bgMagenta(white(' INFO '))}${' '.repeat(8)}${magenta(
-			'Creating Stylelint configuration file...',
-		)}`,
+		`  ${bgMagenta(white(' INFO '))}${' '.repeat(8)}${magenta('Creating Stylelint configuration file...')}`,
 	);
-	log(`${' '.repeat(16)}The following configuration will be added to your project:`);
+	log(`  ${' '.repeat(14)}The following configuration will be added to your project:`);
 	newline();
 
-	const configLines = DEFAULT_CONFIG_CONTENT.split('\n');
+	const boxContent = createBox(DEFAULT_CONFIG_CONTENT.split('\n'), {
+		fileName: CONFIG_FILE,
+		fileNameColor: cyan,
+		borderColor: gray,
+		textColor: white,
+	});
 
-	log(
-		`${createBox(configLines, {
-			fileName: CONFIG_FILE,
-			fileNameColor: cyan,
-			borderColor: gray,
-			textColor: white,
-		})}\n`,
-	);
+	log(`${boxContent}\n`);
 }
 
 export async function setupStylelintConfig(context: Context): Promise<void> {

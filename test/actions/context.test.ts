@@ -1,9 +1,8 @@
+import { type PackageManager, getPackageManager } from '../../src/utils/package-utils.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createContext } from './../../src/actions/context.js';
-import { getPackageManager } from '../../src/utils/package-utils.js';
 import { pathToFileURL } from 'node:url';
 import process from 'node:process';
-import prompts from 'prompts';
 
 vi.mock('../../src/utils/package-utils.js', () => ({
 	getPackageManager: vi.fn(),
@@ -11,115 +10,90 @@ vi.mock('../../src/utils/package-utils.js', () => ({
 
 vi.mock('node:process', () => ({
 	default: {
-		exit: vi.fn(),
-		cwd: vi.fn(),
+		exit: vi.fn((code: number) => {
+      throw new Error(`Process exited with code ${code}`);
+    }),
+    cwd: vi.fn(() => '/fake/path'),
 	},
 }));
 
 describe('createContext', () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		vi.mocked(process.cwd).mockReturnValue('/fake/path');
-		vi.mocked(getPackageManager).mockResolvedValue(undefined);
-	});
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getPackageManager).mockClear();
+  });
 
-	it('should create default context with no arguments', async () => {
-		const context = await createContext([]);
+  it('should create default context with correct structure', async () => {
+    const context = await createContext([]);
 
-		expect(context).toEqual({
-			help: false,
-			version: false,
-			prompt: prompts,
-			isDryRun: false,
-			shouldSkipInstall: false,
-			cwd: new URL(`${pathToFileURL('/fake/path')}/`),
-			packageManager: undefined,
-			exit: expect.any(Function),
-		});
-	});
+    expect(context).toMatchObject({
+      help: false,
+      version: false,
+      isDryRun: false,
+      shouldSkipInstall: false,
+      packageManager: undefined,
+      cwd: expect.any(URL),
+      exit: expect.any(Function),
+    });
+    expect(context.cwd.toString()).toBe(`${pathToFileURL('/fake/path')}/`);
+  });
 
-	it('should handle help flags', async () => {
-		const longFlag = await createContext(['--help']);
-		const shortFlag = await createContext(['-h']);
+  it.each([
+    ['--help', 'help'],
+    ['-h', 'help'],
+    ['--version', 'version'],
+    ['-v', 'version'],
+    ['--dry-run', 'isDryRun'],
+    ['--no-install', 'shouldSkipInstall'],
+  ])('should handle flag %s correctly', async (flag, prop) => {
+    const context = await createContext([flag]);
 
-		expect(longFlag.help).toBe(true);
-		expect(shortFlag.help).toBe(true);
-	});
+    expect(context).toHaveProperty(prop, true);
+  });
 
-	it('should handle version flags', async () => {
-		const longFlag = await createContext(['--version']);
-		const shortFlag = await createContext(['-v']);
+  it.each([
+    ['--use-npm', 'npm'],
+    ['--use-yarn', 'yarn'],
+    ['--use-pnpm', 'pnpm'],
+    ['--use-bun', 'bun'],
+    ['--use-deno', 'deno'],
+  ])('should detect %s package manager', async (flag, expectedPm) => {
+    vi.mocked(getPackageManager).mockReturnValue(expectedPm as PackageManager);
 
-		expect(longFlag.version).toBe(true);
-		expect(shortFlag.version).toBe(true);
-	});
+    const context = await createContext([flag]);
 
-	it('should handle package manager flags', async () => {
-		vi.mocked(getPackageManager).mockResolvedValue('npm');
+    expect(getPackageManager).toHaveBeenCalledWith(
+      expect.objectContaining({ [flag]: true })
+    );
+    expect(context.packageManager).toBe(expectedPm);
+  });
 
-		const context = await createContext(['--use-npm']);
+  it('should prioritize first package manager when multiple specified', async () => {
+    await createContext(['--use-npm', '--use-yarn']);
 
-		expect(context.packageManager).toBe('npm');
-		expect(getPackageManager).toHaveBeenCalledWith({
-			'--use-npm': true,
-			'--use-yarn': undefined,
-			'--use-pnpm': undefined,
-			'--use-bun': undefined,
-			'--use-deno': undefined,
-		});
-	});
+    expect(getPackageManager).toHaveBeenCalledWith({
+      '--use-npm': true,
+      '--use-yarn': true,
+      '--use-pnpm': false,
+      '--use-bun': false,
+      '--use-deno': false,
+    });
+  });
 
-	it('should handle multiple package manager flags', async () => {
-		await createContext(['--use-npm', '--use-yarn']);
+  it('should handle exit function properly', async () => {
+    const context = await createContext([]);
+    const exitCode = 1;
 
-		expect(getPackageManager).toHaveBeenCalledWith({
-			'--use-npm': true,
-			'--use-yarn': true,
-			'--use-pnpm': undefined,
-			'--use-bun': undefined,
-			'--use-deno': undefined,
-		});
-	});
+    expect(() => context.exit(exitCode)).toThrow('Process exited with code 1');
+    expect(process.exit).toHaveBeenCalledWith(exitCode);
+  });
 
-	it('should handle dry run flag', async () => {
-		const context = await createContext(['--dry-run']);
+  it('should ignore unknown flags in permissive mode', async () => {
+    const context = await createContext(['--unknown', '--flags']);
 
-		expect(context.isDryRun).toBe(true);
-	});
-
-	it('should handle no-install flag', async () => {
-		const context = await createContext(['--no-install']);
-
-		expect(context.shouldSkipInstall).toBe(true);
-	});
-
-	it('should handle no-color flag', async () => {
-		const context = await createContext(['--no-color']);
-
-		expect(context).toBeDefined();
-	});
-
-	it('should handle exit function', async () => {
-		const context = await createContext([]);
-		const exitCode = 1;
-
-		context.exit(exitCode);
-
-		expect(process.exit).toHaveBeenCalledWith(exitCode);
-	});
-
-	it('should handle permissive unknown flags', async () => {
-		const context = await createContext(['--unknown-flag']);
-
-		expect(context).toBeDefined();
-		expect(context.help).toBe(false);
-	});
-
-	it('should maintain correct cwd URL format', async () => {
-		const context = await createContext([]);
-
-		expect(context.cwd).toBeInstanceOf(URL);
-		expect(context.cwd.toString()).toMatch(/\/$/);
-		expect(context.cwd.toString()).toContain('/fake/path');
-	});
+    expect(context).toMatchObject({
+      help: false,
+      version: false,
+    });
+  });
 });

@@ -1,18 +1,13 @@
-import type { Context, PromptWithOverride } from '../../src/actions/context.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { log, newline } from '../../src/utils/logger.js';
-import { Answers } from 'prompts';
+import type { Context } from '../../src/actions/context.js';
+import { MockPrompt } from '../helpers.js';
 import { getInstallConfirmation } from '../../src/prompts/install.js';
 
 vi.mock('../../src/utils/logger.js', () => ({
 	log: vi.fn(),
 	newline: vi.fn(),
 }));
-
-type MockPrompt = PromptWithOverride & {
-	mockResolvedValueOnce: (value: Answers<string>) => void;
-	mockRejectedValueOnce: (error: Error) => void;
-};
 
 describe('getInstallConfirmation', () => {
 	const mockPrompt = vi.fn() as unknown as MockPrompt;

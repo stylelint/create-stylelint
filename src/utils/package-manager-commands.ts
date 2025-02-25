@@ -1,66 +1,51 @@
-import { Command, ResolvedCommand } from 'package-manager-detector';
+import { Command } from 'package-manager-detector';
+import { PackageManager } from './package-utils.js';
 import { resolveCommand } from 'package-manager-detector/commands';
 
-import type { PackageManager } from './package-utils.js';
-
-export type DependencySpecification = { packageName: string; requestedVersion?: string };
-
-const DOCS_URLS = {
+const PM_DOCS = {
 	npm: 'https://docs.npmjs.com/',
 	pnpm: 'https://pnpm.io/cli/',
 	yarn: 'https://yarnpkg.com/cli/',
 	bun: 'https://bun.sh/docs/cli/',
-	deno: 'https://docs.deno.com/runtime/reference/cli/init/',
+	deno: 'https://docs.deno.com/runtime/reference/cli/',
 } as const;
 
-function resolveCommandHelper(
+interface DependencySpecification {
+	packageName: string;
+	requestedVersion?: string;
+}
+
+const resolvePMCommand = (pm: PackageManager, type: Command, args: string[] = []) => {
+	const cmd = resolveCommand(pm, type, args);
+
+	if (!cmd) throw new Error(`${type} command not found for ${pm}`);
+
+	return cmd;
+};
+
+const formatPkgSpec = (
+	{ packageName, requestedVersion }: DependencySpecification,
 	pm: PackageManager,
-	commandType: Command,
-	args: string[],
-): ResolvedCommand {
-	const resolved = resolveCommand(pm, commandType, args);
+) =>
+	`${pm === 'deno' ? `npm:${packageName}` : packageName}${requestedVersion ? `@${requestedVersion}` : ''}`;
 
-	if (!resolved) {
-		throw new Error(`${commandType} command not found for ${pm}`);
-	}
+export const getInitCommand = (pm: PackageManager) => {
+	const { command } = resolvePMCommand(pm, 'agent');
 
-	return resolved;
-}
+	return { command: `${command} init`, docs: `${PM_DOCS[pm]}init` };
+};
 
-function formatPackageSpec(packageSpec: DependencySpecification, packageManager: PackageManager) {
-	const { packageName, requestedVersion } = packageSpec;
-	const basePackageName = packageManager === 'deno' ? `npm:${packageName}` : packageName;
+export const getLintCommand = (pm: PackageManager, script = 'stylelint "**/*.css"') => {
+	const { command, args } = resolvePMCommand(pm, 'execute', [script]);
 
-	return requestedVersion ? `${basePackageName}@${requestedVersion}` : basePackageName;
-}
+	return `${command} ${args.join(' ')}`;
+};
 
-export function getInitCommand(pm: PackageManager) {
-	const resolved = resolveCommandHelper(pm, 'agent', []);
+export const getInstallCommand = (pm: PackageManager, packages: DependencySpecification[]) => {
+	if (!packages.length) throw new Error('At least one package required');
 
-	return {
-		command: `${resolved.command} init`,
-		docs: `${DOCS_URLS[pm]}init`,
-	};
-}
+	const specs = packages.map((pkg) => formatPkgSpec(pkg, pm));
+	const { command, args } = resolvePMCommand(pm, 'add', ['-D', ...specs]);
 
-export function getLintCommand(
-	packageManager: PackageManager,
-	lintScript = 'stylelint "**/*.css"',
-) {
-	const resolved = resolveCommandHelper(packageManager, 'execute', [lintScript]);
-
-	return `${resolved.command} ${resolved.args.join(' ')}`;
-}
-
-export function getInstallCommand(
-	packageManager: PackageManager,
-	packages: DependencySpecification[],
-) {
-	if (!packages.length) throw new Error('At least one package is required');
-
-	const formattedPackages = packages.map((pkg) => formatPackageSpec(pkg, packageManager));
-	const args = ['-D', ...formattedPackages];
-	const resolved = resolveCommandHelper(packageManager, 'add', args);
-
-	return `${resolved.command} ${resolved.args.join(' ')}`;
-}
+	return `${command} ${args.join(' ')}`;
+};

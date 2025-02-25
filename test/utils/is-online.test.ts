@@ -7,7 +7,7 @@ import process from 'node:process'
 vi.mock('node:dns/promises');
 vi.mock('node:child_process');
 
-describe('Online Checker', () => {
+describe('is-onilne', () => {
 	const mockLookup = vi.spyOn(dns, 'lookup');
 	const mockExecSync = vi.spyOn(childProcess, 'execSync');
 
