@@ -30,6 +30,8 @@ const formatPkgSpec = (
 	`${pm === 'deno' ? `npm:${packageName}` : packageName}${requestedVersion ? `@${requestedVersion}` : ''}`;
 
 export const getInitCommand = (pm: PackageManager) => {
+	// Since package-manager-detector doesn't provide a specific command for initialization,
+  // we use the base package manager command ('agent') and append 'init' to it
 	const { command } = resolvePMCommand(pm, 'agent');
 
 	return { command: `${command} init`, docs: `${PM_DOCS[pm]}init` };
