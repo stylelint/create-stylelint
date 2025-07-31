@@ -18,6 +18,7 @@ const DEFAULT_CONFIG_CONTENT = `/** @type {import('stylelint').Config} */
 export default {
   extends: ['stylelint-config-standard'],
 };`;
+const DEFAULT_PACKAGES = '-D stylelint stylelint-config-standard';
 
 async function getExistingConfigInDirectory() {
 	const explorer = cosmiconfig('stylelint');
@@ -45,7 +46,10 @@ function cancelSetup() {
 	process.exit(1);
 }
 
-async function showPrompt() {
+/**
+ * @param {string} pkgManager
+ */
+async function showPrompt(pkgManager) {
 	console.log(
 		stripIndent(`
 			This tool will create a '${DEFAULT_CONFIG_FILE}' file containing:
@@ -64,7 +68,7 @@ async function showPrompt() {
 		stripIndent(`
 			And install the related dependencies using:
 
-			  ${picocolors.dim(`npm install -D stylelint stylelint-config-standard`)}
+			  ${picocolors.dim(`${pkgManager} ${getInstallCommand(pkgManager)} ${DEFAULT_PACKAGES}`)}
 		`),
 	);
 
@@ -148,11 +152,9 @@ async function installPackages(cwd, pkgManager) {
 	const spinner = ora('Installing packages...').start();
 
 	try {
-		await execa(
-			pkgManager,
-			[`${getInstallCommand(pkgManager)}`, '-D', 'stylelint', 'stylelint-config-standard'],
-			{ cwd },
-		);
+		await execa(pkgManager, [`${getInstallCommand(pkgManager)}`, ...DEFAULT_PACKAGES.split(' ')], {
+			cwd,
+		});
 	} catch (error) {
 		spinner.fail();
 		console.error(
@@ -191,7 +193,7 @@ export async function main() {
 	const pkgManager = detectPackageManager()?.name ?? 'npm';
 	const cwd = './';
 
-	await showPrompt();
+	await showPrompt(pkgManager);
 	await createConfig(cwd, pkgManager);
 	await installPackages(cwd, pkgManager);
 	showNextSteps();
