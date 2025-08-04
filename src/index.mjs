@@ -41,8 +41,23 @@ function getInstallCommand(pkgManager) {
 	return pkgManager === 'npm' ? 'install' : 'add';
 }
 
-function cancelSetup() {
-	console.error(picocolors.yellow('Setup cancelled.'));
+/**
+ * @param {string} errorMessage
+ */
+function cancelSetup(errorMessage = '') {
+	console.error(
+		stripIndent(`
+			${picocolors.red(picocolors.bold('Setup canceled!'))}
+		`),
+	);
+
+	if (errorMessage) {
+		console.error(
+			stripIndent(`${errorMessage}
+			`),
+		);
+	}
+
 	process.exit(1);
 }
 
@@ -107,38 +122,19 @@ async function createConfig(cwd, pkgManager) {
 				: `A "${basename}" config already exists.`;
 
 		spinner.fail();
-
-		console.error(
-			stripIndent(`
-				${failureMessage} Remove it and then try again.
-			`),
-		);
-
-		cancelSetup();
+		cancelSetup(`${failureMessage} Remove it and then try again.`);
 	}
 
 	if (!directoryHasPackageJson(cwd)) {
 		spinner.fail();
-
-		console.error(
-			stripIndent(`
-				A "package.json" was not found. Run "${pkgManager} init" and then try again.
-			`),
-		);
-
-		cancelSetup();
+		cancelSetup(`A "package.json" was not found. Run "${pkgManager} init" and then try again.`);
 	}
 
 	try {
 		fs.writeFileSync(DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_CONTENT);
 	} catch (error) {
 		spinner.fail();
-		console.error(
-			stripIndent(`
-				${error}
-			`),
-		);
-		cancelSetup();
+		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
 	spinner.succeed(`Created ${DEFAULT_CONFIG_FILE}`);
@@ -157,12 +153,7 @@ async function installPackages(cwd, pkgManager) {
 		});
 	} catch (error) {
 		spinner.fail();
-		console.error(
-			stripIndent(`
-				${error}
-			`),
-		);
-		cancelSetup();
+		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
 	spinner.succeed('Installed packages');

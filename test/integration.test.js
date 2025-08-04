@@ -82,7 +82,7 @@ describe('create-stylelint', () => {
 	it("should cancel setup if user chooses 'no' at confirmation", (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() => setup(inputs.validEnv, projectRoot, [], 'no\n')).toThrowError('Setup cancelled');
+		expect(() => setup(inputs.validEnv, projectRoot, [], 'no\n')).toThrowError('Setup canceled');
 	});
 
 	it('should not proceed if no package.json exists', (context) => {
