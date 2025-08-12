@@ -18,7 +18,8 @@ const DEFAULT_CONFIG_CONTENT = `/** @type {import('stylelint').Config} */
 export default {
   extends: ['stylelint-config-standard'],
 };`;
-const DEFAULT_PACKAGES = '-D stylelint stylelint-config-standard';
+
+const ADD_COMMAND = 'add -D stylelint stylelint-config-standard';
 
 async function getExistingConfigInDirectory() {
 	const explorer = cosmiconfig('stylelint');
@@ -36,9 +37,17 @@ function directoryHasPackageJson(dir) {
 
 /**
  * @param {string} pkgManager
+ * @return {string} The command
  */
-function getInstallCommand(pkgManager) {
-	return pkgManager === 'npm' ? 'install' : 'add';
+function getExecuteCommand(pkgManager) {
+	switch (pkgManager) {
+		case 'npm':
+			return 'npx';
+		case 'bun':
+			return 'bunx';
+		default:
+			return `${pkgManager} dlx`;
+	}
 }
 
 /**
@@ -67,7 +76,7 @@ function cancelSetup(errorMessage = '') {
 async function showPrompt(pkgManager) {
 	console.log(
 		stripIndent(`
-			This tool will create a '${DEFAULT_CONFIG_FILE}' file containing:
+			We'll create a '${DEFAULT_CONFIG_FILE}' file containing:
 		`),
 	);
 
@@ -81,9 +90,9 @@ async function showPrompt(pkgManager) {
 
 	console.log(
 		stripIndent(`
-			And install the related dependencies using:
+			Then add the related dependencies using:
 
-			  ${picocolors.dim(`${pkgManager} ${getInstallCommand(pkgManager)} ${DEFAULT_PACKAGES}`)}
+			  ${picocolors.dim(`${pkgManager} ${ADD_COMMAND}`)}
 		`),
 	);
 
@@ -144,11 +153,11 @@ async function createConfig(cwd, pkgManager) {
  * @param {string} cwd
  * @param {string} pkgManager
  */
-async function installPackages(cwd, pkgManager) {
-	const spinner = ora('Installing packages...').start();
+async function addPackages(cwd, pkgManager) {
+	const spinner = ora('Adding packages...').start();
 
 	try {
-		await execa(pkgManager, [`${getInstallCommand(pkgManager)}`, ...DEFAULT_PACKAGES.split(' ')], {
+		await execa(pkgManager, [...ADD_COMMAND.split(' ')], {
 			cwd,
 		});
 	} catch (error) {
@@ -156,23 +165,26 @@ async function installPackages(cwd, pkgManager) {
 		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
-	spinner.succeed('Installed packages');
+	spinner.succeed('Added packages');
 }
 
-function showNextSteps() {
+/**
+ * @param {string} pkgManager
+ */
+function showNextSteps(pkgManager) {
 	console.log(
 		stripIndent(`
 			${picocolors.green(picocolors.bold('Setup complete!'))}
 
 			Lint your CSS files with:
 
-			  ${picocolors.dim(`npx stylelint "**/*.css"`)}
+			  ${picocolors.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
 
 			Next steps? Customize your config: ${picocolors.underline(
 				picocolors.blue('https://stylelint.io/user-guide/customize'),
 			)}
 
-			If you benefit from Stylelint, please consider sponsoring the project on:
+			If you benefit from Stylelint, please consider sponsoring the project at:
 
 			- ${picocolors.underline(picocolors.blue('https://github.com/sponsors/stylelint'))}
 			- ${picocolors.underline(picocolors.blue('https://opencollective.com/stylelint'))}
@@ -186,6 +198,6 @@ export async function main() {
 
 	await showPrompt(pkgManager);
 	await createConfig(cwd, pkgManager);
-	await installPackages(cwd, pkgManager);
-	showNextSteps();
+	await addPackages(cwd, pkgManager);
+	showNextSteps(pkgManager);
 }
