@@ -1,5 +1,9 @@
 # Changelog
 
+## Head
+
+- Removed: Node.js less than `20.19.0` support.
+
 ## 0.5.0
 
 - Removed: Node.js less than `18.19.0` support.
