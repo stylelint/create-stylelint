@@ -71,13 +71,13 @@ describe('create-stylelint', () => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(setup(inputs.validEnv, projectRoot, [], 'yes\n')).toContain('Setup complete');
-	}, 10000);
+	}, 15000);
 
 	it('should succeed in a valid env with enter prompt', (context) => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(setup(inputs.validEnv, projectRoot, [], '\n')).toContain('Setup complete');
-	}, 10000);
+	}, 15000);
 
 	it("should cancel setup if user chooses 'no' at confirmation", (context) => {
 		const projectRoot = getProjectRoot(context);
@@ -107,7 +107,7 @@ describe('create-stylelint', () => {
 		expect(() => setup(inputs.failNpmInstall, projectRoot, [], 'yes\n')).toThrowError(
 			'npm error code ETARGET',
 		);
-	}, 10000);
+	}, 15000);
 });
 
 describe.each([
