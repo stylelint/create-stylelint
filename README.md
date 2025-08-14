@@ -9,7 +9,7 @@ The [`create`](https://docs.npmjs.com/cli/commands/npm-init) script for [Styleli
 
 Run `npm create stylelint`
 
-(Also compatible with the Bun, pNPm, and Yarn package managers.)
+(Also compatible with the Bun, pnpm, and Yarn package managers.)
 
 ## Contributing
 
