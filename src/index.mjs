@@ -74,13 +74,13 @@ function cancelSetup(errorMessage = '') {
  * @param {string} pkgManager
  */
 async function showPrompt(pkgManager) {
-	console.log(
+	console.info(
 		stripIndent(`
 			We'll create a '${DEFAULT_CONFIG_FILE}' file containing:
 		`),
 	);
 
-	console.log(
+	console.info(
 		picocolors.dim(
 			DEFAULT_CONFIG_CONTENT.split('\n')
 				.map((line) => `  ${line}`)
@@ -88,7 +88,7 @@ async function showPrompt(pkgManager) {
 		),
 	);
 
-	console.log(
+	console.info(
 		stripIndent(`
 			Then add the related dependencies using:
 
@@ -172,7 +172,7 @@ async function addPackages(cwd, pkgManager) {
  * @param {string} pkgManager
  */
 function showNextSteps(pkgManager) {
-	console.log(
+	console.info(
 		stripIndent(`
 			${picocolors.green(picocolors.bold('Setup complete!'))}
 
