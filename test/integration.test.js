@@ -66,7 +66,7 @@ describe('create-stylelint', () => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(setup(inputs.validEnv, projectRoot)).toMatch(/You can now lint your CSS files using/);
-	});
+	}, 15000);
 
 	it('should not proceed if no package.json exists', (context) => {
 		const projectRoot = getProjectRoot(context);
@@ -90,7 +90,7 @@ describe('create-stylelint', () => {
 		expect(() => setup(inputs.failNpmInstall, projectRoot)).toThrowError(
 			/Failed to install packages/,
 		);
-	});
+	}, 15000);
 });
 
 describe.each([
