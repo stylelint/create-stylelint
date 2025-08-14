@@ -19,7 +19,6 @@
   ],
   "license": "MIT",
   "author": "stylelint",
-  "type": "module",
   "main": "create-stylelint.mjs",
   "bin": {
     "create-stylelint": "./create-stylelint.mjs"
