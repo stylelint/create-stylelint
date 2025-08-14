@@ -45,8 +45,11 @@ function getExecuteCommand(pkgManager) {
 			return 'npx';
 		case 'bun':
 			return 'bunx';
-		default:
+		case 'pnpm':
+		case 'yarn':
 			return `${pkgManager} dlx`;
+		default:
+			throw new Error(`"${pkgManager}" package manager is not supported`);
 	}
 }
 
