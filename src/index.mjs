@@ -14,9 +14,9 @@ import picocolors from 'picocolors';
 import stripIndent from 'strip-indent';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
-const DEFAULT_CONFIG_CONTENT = `/** @type {import('stylelint').Config} */
+const DEFAULT_CONFIG_CONTENT = `/** @type {import("stylelint").Config} */
 export default {
-  extends: ['stylelint-config-standard'],
+  "extends": ["stylelint-config-standard"]
 };`;
 
 const ADD_COMMAND = 'add -D stylelint stylelint-config-standard';
