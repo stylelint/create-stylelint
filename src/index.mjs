@@ -143,7 +143,7 @@ async function createConfig(cwd, pkgManager) {
 	}
 
 	try {
-		fs.writeFileSync(DEFAULT_CONFIG_FILE, DEFAULT_CONFIG_CONTENT);
+		fs.writeFileSync(DEFAULT_CONFIG_FILE, `${DEFAULT_CONFIG_CONTENT}\n`);
 	} catch (error) {
 		spinner.fail();
 		cancelSetup(error instanceof Error ? error.message : String(error));
