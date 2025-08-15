@@ -79,7 +79,7 @@ function cancelSetup(errorMessage = '') {
 async function showPrompt(pkgManager) {
 	console.info(
 		stripIndent(`
-			We'll create a ${pc.italic(DEFAULT_CONFIG_FILE)} file containing:
+			We'll create a ${pc.cyan(DEFAULT_CONFIG_FILE)} file containing:
 		`),
 	);
 
