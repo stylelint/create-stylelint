@@ -149,15 +149,15 @@ async function createConfig(cwd, pkgManager) {
 		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
-	spinner.succeed(`Created ${DEFAULT_CONFIG_FILE}`);
+	spinner.succeed('Created config file');
 }
 
 /**
  * @param {string} cwd
  * @param {string} pkgManager
  */
-async function addPackages(cwd, pkgManager) {
-	const spinner = ora('Adding packages...').start();
+async function addDependencies(cwd, pkgManager) {
+	const spinner = ora('Adding dependencies...').start();
 
 	try {
 		await execa(pkgManager, [...ADD_COMMAND.split(' ')], {
@@ -168,7 +168,7 @@ async function addPackages(cwd, pkgManager) {
 		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
-	spinner.succeed('Added packages');
+	spinner.succeed('Added dependencies');
 }
 
 /**
@@ -201,6 +201,6 @@ export async function main() {
 
 	await showPrompt(pkgManager);
 	await createConfig(cwd, pkgManager);
-	await addPackages(cwd, pkgManager);
+	await addDependencies(cwd, pkgManager);
 	showNextSteps(pkgManager);
 }
