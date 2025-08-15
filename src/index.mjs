@@ -10,7 +10,7 @@ import { cosmiconfig } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
 import ora from 'ora';
-import picocolors from 'picocolors';
+import pc from 'picocolors';
 import stripIndent from 'strip-indent';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
@@ -59,7 +59,7 @@ function getExecuteCommand(pkgManager) {
 function cancelSetup(errorMessage = '') {
 	console.error(
 		stripIndent(`
-			${picocolors.red(picocolors.bold('Setup canceled!'))}
+			${pc.red(pc.bold('Setup canceled!'))}
 		`),
 	);
 
@@ -84,7 +84,7 @@ async function showPrompt(pkgManager) {
 	);
 
 	console.info(
-		picocolors.dim(
+		pc.dim(
 			DEFAULT_CONFIG_CONTENT.split('\n')
 				.map((line) => `  ${line}`)
 				.join('\n'),
@@ -95,7 +95,7 @@ async function showPrompt(pkgManager) {
 		stripIndent(`
 			Then add the related dependencies using:
 
-			  ${picocolors.dim(`${pkgManager} ${ADD_COMMAND}`)}
+			  ${pc.dim(`${pkgManager} ${ADD_COMMAND}`)}
 		`),
 	);
 
@@ -177,20 +177,20 @@ async function addPackages(cwd, pkgManager) {
 function showNextSteps(pkgManager) {
 	console.info(
 		stripIndent(`
-			${picocolors.green(picocolors.bold('Setup complete!'))}
+			${pc.green(pc.bold('Setup complete!'))}
 
 			Lint your CSS files with:
 
-			  ${picocolors.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
+			  ${pc.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
 
-			Next steps? Customize your config: ${picocolors.underline(
-				picocolors.blue('https://stylelint.io/user-guide/customize'),
+			Next steps? Customize your config: ${pc.underline(
+				pc.blue('https://stylelint.io/user-guide/customize'),
 			)}
 
 			If you benefit from Stylelint, please consider sponsoring the project at:
 
-			- ${picocolors.underline(picocolors.blue('https://github.com/sponsors/stylelint'))}
-			- ${picocolors.underline(picocolors.blue('https://opencollective.com/stylelint'))}
+			- ${pc.underline(pc.blue('https://github.com/sponsors/stylelint'))}
+			- ${pc.underline(pc.blue('https://opencollective.com/stylelint'))}
 		`),
 	);
 }
