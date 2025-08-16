@@ -49,6 +49,7 @@
     ]
   },
   "dependencies": {
+    "@inquirer/confirm": "^5.1.14",
     "cosmiconfig": "^9.0.0",
     "execa": "^9.6.0",
     "ora": "^8.1.1",
@@ -70,6 +71,11 @@
     "remark-cli": "^12.0.1",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-darwin-x64": "*",
+    "@rollup/rollup-linux-x64-gnu": "*",
+    "@rollup/rollup-win32-x64-msvc": "*"
   },
   "engines": {
     "node": ">=20.19.0"

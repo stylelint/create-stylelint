@@ -5,19 +5,27 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import process from 'node:process';
 
-import { cosmiconfigSync } from 'cosmiconfig';
+import confirm from '@inquirer/confirm';
+import { cosmiconfig } from 'cosmiconfig';
 import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
 import ora from 'ora';
-import picocolors from 'picocolors';
+import pc from 'picocolors';
 import stripIndent from 'strip-indent';
 
-const DEFAULT_CONFIG_FILE = '.stylelintrc.json';
+const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
+const DEFAULT_CONFIG_CONTENT = `/** @type {import("stylelint").Config} */
+export default {
+  "extends": ["stylelint-config-standard"]
+};`;
 
-function getExistingConfigInDirectory() {
-	const explorer = cosmiconfigSync('stylelint');
+const ADD_COMMAND = 'add -D stylelint stylelint-config-standard';
 
-	return explorer.search();
+async function getExistingConfigInDirectory() {
+	const explorer = cosmiconfig('stylelint');
+	const result = await explorer.search();
+
+	return result;
 }
 
 /**
@@ -29,76 +37,160 @@ function directoryHasPackageJson(dir) {
 
 /**
  * @param {string} pkgManager
+ * @return {string} The command
  */
-function getInstallCommand(pkgManager) {
-	return pkgManager === 'npm' ? 'install' : 'add';
+function getExecuteCommand(pkgManager) {
+	switch (pkgManager) {
+		case 'npm':
+			return 'npx';
+		case 'bun':
+			return 'bunx';
+		case 'pnpm':
+		case 'yarn':
+			return `${pkgManager} dlx`;
+		default:
+			throw new Error(`"${pkgManager}" package manager is not supported`);
+	}
+}
+
+/**
+ * @param {string} errorMessage
+ */
+function cancelSetup(errorMessage = '') {
+	console.error(
+		stripIndent(`
+			${pc.red(pc.bold('Setup canceled!'))}
+		`),
+	);
+
+	if (errorMessage) {
+		console.error(
+			stripIndent(`${errorMessage}
+			`),
+		);
+	}
+
+	process.exit(1);
+}
+
+/**
+ * @param {string} pkgManager
+ */
+async function showPrompt(pkgManager) {
+	console.info(
+		stripIndent(`
+			We'll create a ${pc.cyan(DEFAULT_CONFIG_FILE)} file containing:
+		`),
+	);
+
+	console.info(
+		pc.dim(
+			DEFAULT_CONFIG_CONTENT.split('\n')
+				.map((line) => `  ${line}`)
+				.join('\n'),
+		),
+	);
+
+	console.info(
+		stripIndent(`
+			Then add the related dependencies using:
+
+			  ${pc.dim(`${pkgManager} ${ADD_COMMAND}`)}
+		`),
+	);
+
+	let proceed;
+
+	try {
+		proceed = await confirm({
+			message: 'Continue?',
+		});
+	} catch (error) {
+		if (error instanceof Error && error.name === 'ExitPromptError') {
+			// silence
+		} else {
+			throw error;
+		}
+	}
+
+	if (!proceed) {
+		cancelSetup();
+	}
 }
 
 /**
  * @param {string} cwd
  * @param {string} pkgManager
  */
-function createConfig(cwd, pkgManager) {
+async function createConfig(cwd, pkgManager) {
 	const spinner = ora('Creating config...').start();
-	const existingConfig = getExistingConfigInDirectory();
+	const existingConfig = await getExistingConfigInDirectory();
 
 	if (existingConfig !== null) {
 		const basename = path.basename(existingConfig.filepath);
 		const failureMessage =
 			basename === 'package.json'
-				? 'The "stylelint" config in "package.json" already exists.'
-				: `The "${basename}" config already exists.`;
+				? 'A "stylelint" config in "package.json" already exists.'
+				: `A "${basename}" config already exists.`;
 
-		spinner.fail(`Failed to create config:\n${failureMessage} Remove it and then try again.`);
-		process.exit(1);
+		spinner.fail();
+		cancelSetup(`${failureMessage} Remove it and then try again.`);
 	}
 
 	if (!directoryHasPackageJson(cwd)) {
-		spinner.fail(
-			`Failed to create config:\npackage.json was not found. Run "${pkgManager} init" and then try again.`,
-		);
-		process.exit(1);
+		spinner.fail();
+		cancelSetup(`A "package.json" was not found. Run "${pkgManager} init" and then try again.`);
 	}
 
 	try {
-		fs.writeFileSync(DEFAULT_CONFIG_FILE, '{ "extends": ["stylelint-config-standard"] }');
+		fs.writeFileSync(DEFAULT_CONFIG_FILE, `${DEFAULT_CONFIG_CONTENT}\n`);
 	} catch (error) {
-		spinner.fail(`Failed to create config:\n${error}`);
-		process.exit(1);
+		spinner.fail();
+		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
-	spinner.succeed(`Created ${DEFAULT_CONFIG_FILE}.`);
+	spinner.succeed('Created config file');
 }
 
 /**
  * @param {string} cwd
  * @param {string} pkgManager
  */
-async function installPackages(cwd, pkgManager) {
-	const spinner = ora('Installing packages...').start();
+async function addDependencies(cwd, pkgManager) {
+	const spinner = ora('Adding dependencies...').start();
 
 	try {
-		await execa(
-			pkgManager,
-			[`${getInstallCommand(pkgManager)}`, '-D', 'stylelint', 'stylelint-config-standard'],
-			{ cwd },
-		);
+		await execa(pkgManager, [...ADD_COMMAND.split(' ')], {
+			cwd,
+		});
 	} catch (error) {
-		spinner.fail(`Failed to install packages:\n${error}`);
-		process.exit(1);
+		spinner.fail();
+		cancelSetup(error instanceof Error ? error.message : String(error));
 	}
 
-	spinner.succeed('Installed packages.');
+	spinner.succeed('Added dependencies');
 }
 
-function showNextSteps() {
-	console.log(
+/**
+ * @param {string} pkgManager
+ */
+function showNextSteps(pkgManager) {
+	console.info(
 		stripIndent(`
-			${picocolors.green(`You can now lint your CSS files using:
-			npx stylelint "**/*.css"`)}
+			${pc.green(pc.bold('Setup complete!'))}
 
-			${picocolors.dim(`We recommend customizing Stylelint:
-			https://stylelint.io/user-guide/customize/`)}
+			Lint your CSS files with:
+
+			  ${pc.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
+
+			Next steps? Customize your config: ${pc.underline(
+				pc.blue('https://stylelint.io/user-guide/customize'),
+			)}
+
+			If you benefit from Stylelint, please consider sponsoring the project at:
+
+			- ${pc.underline(pc.blue('https://github.com/sponsors/stylelint'))}
+			- ${pc.underline(pc.blue('https://opencollective.com/stylelint'))}
 		`),
 	);
 }
@@ -107,7 +199,8 @@ export async function main() {
 	const pkgManager = detectPackageManager()?.name ?? 'npm';
 	const cwd = './';
 
-	createConfig(cwd, pkgManager);
-	await installPackages(cwd, pkgManager);
-	showNextSteps();
+	await showPrompt(pkgManager);
+	await createConfig(cwd, pkgManager);
+	await addDependencies(cwd, pkgManager);
+	showNextSteps(pkgManager);
 }
