@@ -3,8 +3,8 @@
 ## 0.6.0
 
 - Removed: Node.js less than `20.19.0` support.
-- Changed: generated config file to `stylelint.config.mjs`
-- Added: confirmation prompt
+- Changed: generated config file to `stylelint.config.mjs`.
+- Added: confirmation prompt.
 
 ## 0.5.0
 
