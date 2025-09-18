@@ -13,6 +13,9 @@ updates:
         dependency-type: 'development'
       rollup:
         patterns: ['@rollup/*']
+    cooldown:
+      default-days: 7
+
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
@@ -20,3 +23,5 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - 'pr: dependencies'
+    cooldown:
+      default-days: 7
