@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed: bump `ora` to v9.
+
 ## 0.6.0
 
 - Removed: Node.js less than `20.19.0` support.
