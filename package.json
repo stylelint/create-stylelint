@@ -52,7 +52,7 @@
     "@inquirer/confirm": "^5.1.18",
     "cosmiconfig": "^9.0.0",
     "execa": "^9.6.0",
-    "ora": "^8.1.1",
+    "ora": "^9.0.0",
     "picocolors": "^1.1.1",
     "semver": "^7.7.2",
     "strip-indent": "^4.0.0",
