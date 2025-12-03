@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Changed: migrate to ECMAScript module.
+
 ## 0.7.0
 
 - Changed: bump `ora` to v9.
