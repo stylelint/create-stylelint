@@ -19,11 +19,13 @@
   ],
   "license": "MIT",
   "author": "stylelint",
-  "main": "create-stylelint.mjs",
+  "type": "module",
+  "exports": "./create-stylelint.mjs",
   "bin": {
     "create-stylelint": "./create-stylelint.mjs"
   },
   "files": [
+    "create-stylelint.mjs",
     "src"
   ],
   "scripts": {
