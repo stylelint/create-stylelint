@@ -53,9 +53,9 @@
     "@inquirer/confirm": "^6.0.4",
     "cosmiconfig": "^9.0.0",
     "execa": "^9.6.1",
-    "ora": "^9.1.0",
+    "ora": "^9.3.0",
     "picocolors": "^1.1.1",
-    "semver": "^7.7.2",
+    "semver": "^7.7.4",
     "strip-indent": "^4.1.0",
     "which-pm-runs": "^1.1.0"
   },
