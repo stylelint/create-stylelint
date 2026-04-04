@@ -7,11 +7,13 @@ import process from 'node:process';
 
 import confirm from '@inquirer/confirm';
 import { cosmiconfig } from 'cosmiconfig';
-import detectPackageManager from 'which-pm-runs';
 import { execa } from 'execa';
 import ora from 'ora';
 import pc from 'picocolors';
 import stripIndent from 'strip-indent';
+// @ts-expect-error - TS2595: 'whichPMRuns' can only be imported by using a default import.
+//                    Need to wait for a `@types/which-pm-runs` new version.
+import { whichPMRuns } from 'which-pm-runs';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
 const DEFAULT_CONFIG_CONTENT = `/** @type {import("stylelint").Config} */
@@ -196,7 +198,7 @@ function showNextSteps(pkgManager) {
 }
 
 export async function main() {
-	const pkgManager = detectPackageManager()?.name ?? 'npm';
+	const pkgManager = whichPMRuns()?.name ?? 'npm';
 	const cwd = './';
 
 	await showPrompt(pkgManager);
