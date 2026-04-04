@@ -57,7 +57,7 @@
     "picocolors": "^1.1.1",
     "semver": "^7.7.4",
     "strip-indent": "^4.1.0",
-    "which-pm-runs": "^1.1.0"
+    "which-pm-runs": "^2.0.0"
   },
   "devDependencies": {
     "@stylelint/npm-package-json-lint-config": "^5.1.0",
