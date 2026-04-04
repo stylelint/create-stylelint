@@ -107,7 +107,11 @@ async function showPrompt(pkgManager) {
 		});
 	} catch (error) {
 		if (error instanceof Error && error.name === 'ExitPromptError') {
-			// silence
+			if (process.env.NODE_ENV === 'test') {
+				console.error(error);
+			} else {
+				// silence
+			}
 		} else {
 			throw error;
 		}
