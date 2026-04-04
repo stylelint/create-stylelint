@@ -50,7 +50,7 @@
     ]
   },
   "dependencies": {
-    "@inquirer/confirm": "^6.0.4",
+    "@inquirer/confirm": "^6.0.10",
     "cosmiconfig": "^9.0.1",
     "execa": "^9.6.1",
     "ora": "^9.3.0",
