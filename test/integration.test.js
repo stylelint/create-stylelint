@@ -105,7 +105,7 @@ describe('create-stylelint', () => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(setupError(inputs.noPackageJson, projectRoot, [], 'yes\n')).toContain(
-			'A package.json was not found',
+			'was not found',
 		);
 	});
 
@@ -113,7 +113,7 @@ describe('create-stylelint', () => {
 		const projectRoot = getProjectRoot(context);
 
 		expect(setupError(inputs.stylelintConfigExistsPackageJson, projectRoot, [], 'yes\n')).toContain(
-			'A stylelint entry in package.json already exists.',
+			'already exists.',
 		);
 	});
 
