@@ -104,9 +104,7 @@ describe('create-stylelint', () => {
 	it('should not proceed if no package.json exists', (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(setupError(inputs.noPackageJson, projectRoot, [], 'yes\n')).toContain(
-			'was not found',
-		);
+		expect(setupError(inputs.noPackageJson, projectRoot, [], 'yes\n')).toContain('was not found');
 	});
 
 	it('should not proceed if the stylelint field exists in package.json', (context) => {
