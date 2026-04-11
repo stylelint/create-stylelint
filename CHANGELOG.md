@@ -3,7 +3,7 @@
 ## Unreleased
 
 - Changed: migrate to ECMAScript module.
-- Added: task progression indication
+- Added: task progression indication.
 
 ## 0.7.0
 
