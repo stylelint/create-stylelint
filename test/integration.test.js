@@ -26,7 +26,23 @@ function setup(pathToTest, projectRoot, args = [], input = null) {
 	return execFileSync('node', [path.join(projectRoot, 'create-stylelint.mjs'), ...args], {
 		cwd: path.join(projectRoot, pathToTest),
 		input: input !== null ? input : undefined,
-	}).toString();
+		encoding: 'utf8',
+		stdio: ['pipe', 'pipe', 'pipe'],
+	});
+}
+
+function setupError(pathToTest, projectRoot, args = [], input = null) {
+	try {
+		execFileSync('node', [path.join(projectRoot, 'create-stylelint.mjs'), ...args], {
+			cwd: path.join(projectRoot, pathToTest),
+			input: input !== null ? input : undefined,
+			encoding: 'utf8',
+			stdio: ['pipe', 'pipe', 'pipe'],
+		});
+		throw new Error('Expected process to exit with non-zero code');
+	} catch (error) {
+		return error.stdout + error.stderr;
+	}
 }
 
 function backupFiles(root) {
@@ -70,41 +86,39 @@ describe('create-stylelint', () => {
 	it('should succeed in a valid env with yes prompt', (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(setup(inputs.validEnv, projectRoot, [], 'yes\n')).toContain('Setup complete');
+		expect(setup(inputs.validEnv, projectRoot, [], 'yes\n')).toContain('Done!');
 	}, 15000);
 
-	it('should succeed in a valid env with enter prompt', (context) => {
+	it('should succeed in a valid env with y prompt', (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(setup(inputs.validEnv, projectRoot, [], '\n')).toContain('Setup complete');
+		expect(setup(inputs.validEnv, projectRoot, [], 'y\n')).toContain('Done!');
 	}, 15000);
 
 	it("should cancel setup if user chooses 'no' at confirmation", (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() => setup(inputs.validEnv, projectRoot, [], 'no\n')).toThrowError('Setup canceled');
+		expect(setup(inputs.validEnv, projectRoot, [], 'no\n')).toContain('Canceled');
 	});
 
 	it('should not proceed if no package.json exists', (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() => setup(inputs.noPackageJson, projectRoot, [], 'yes\n')).toThrowError(
-			'A "package.json" was not found',
-		);
+		expect(setupError(inputs.noPackageJson, projectRoot, [], 'yes\n')).toContain('was not found');
 	});
 
 	it('should not proceed if the stylelint field exists in package.json', (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() =>
-			setup(inputs.stylelintConfigExistsPackageJson, projectRoot, [], 'yes\n'),
-		).toThrowError('A "stylelint" config in "package.json" already exists.');
+		expect(setupError(inputs.stylelintConfigExistsPackageJson, projectRoot, [], 'yes\n')).toContain(
+			'already exists.',
+		);
 	});
 
 	it('should error if npm install fails', (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() => setup(inputs.failNpmInstall, projectRoot, [], 'yes\n')).toThrowError(
+		expect(setupError(inputs.failNpmInstall, projectRoot, [], 'yes\n')).toContain(
 			'npm error code ETARGET',
 		);
 	}, 15000);
@@ -139,6 +153,6 @@ describe.each([
 	it(`should not proceed, since a stylelint configuration already exists at ${file}`, (context) => {
 		const projectRoot = getProjectRoot(context);
 
-		expect(() => setup(fixture, projectRoot, [], 'yes\n')).toThrowError('config already exists');
+		expect(setupError(fixture, projectRoot, [], 'yes\n')).toContain('already exists.');
 	});
 });

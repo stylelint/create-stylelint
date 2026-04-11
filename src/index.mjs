@@ -1,14 +1,12 @@
-/* eslint no-console: 'off' */
 /* eslint n/no-process-exit: 'off' */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import process from 'node:process';
 
-import confirm from '@inquirer/confirm';
+import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@clack/prompts';
 import { cosmiconfig } from 'cosmiconfig';
 import { execa } from 'execa';
-import ora from 'ora';
 import pc from 'picocolors';
 import stripIndent from 'strip-indent';
 // @ts-expect-error - TS2595: 'whichPMRuns' can only be imported by using a default import.
@@ -22,6 +20,99 @@ export default {
 };`;
 
 const ADD_COMMAND = 'add -D stylelint stylelint-config-standard';
+
+export async function main() {
+	const pkgManager = whichPMRuns()?.name ?? 'npm';
+	const cwd = './';
+
+	intro(pc.bgGreen(pc.white(' create-stylelint ')));
+
+	note(
+		stripIndent(`
+			Create a ${pc.cyan(DEFAULT_CONFIG_FILE)} file containing:
+
+			  ${DEFAULT_CONFIG_CONTENT.split('\n').join('\n\t\t\t  ')}
+
+			Add the related dependencies using:
+
+			  ${pkgManager} ${ADD_COMMAND}
+		`).trim(),
+		'This tool will:',
+	);
+
+	const shouldContinue = await confirm({ message: 'Continue?' });
+
+	if (isCancel(shouldContinue) || !shouldContinue) {
+		cancel('Canceled');
+		process.exit(0);
+	}
+
+	const configSpinner = spinner();
+
+	configSpinner.start('Creating config');
+
+	try {
+		const existingConfig = await getExistingConfigInDirectory();
+
+		if (existingConfig !== null) {
+			const basename = path.basename(existingConfig.filepath);
+			const failureMessage =
+				basename === 'package.json'
+					? `A ${pc.cyan('stylelint')} entry in ${pc.cyan('package.json')} already exists.`
+					: `A ${pc.cyan(basename)} file already exists.`;
+
+			throw new Error(`${failureMessage} Remove it and then try again.`);
+		}
+
+		if (!directoryHasPackageJson(cwd)) {
+			throw new Error(
+				`A ${pc.cyan('package.json')} was not found. Run ${pc.cyan(`${pkgManager} init`)} and then try again.`,
+			);
+		}
+
+		fs.writeFileSync(DEFAULT_CONFIG_FILE, `${DEFAULT_CONFIG_CONTENT}\n`);
+		configSpinner.stop('Created config file');
+	} catch (error) {
+		handleError(configSpinner, error);
+	}
+
+	const depsSpinner = spinner();
+
+	depsSpinner.start('Adding dependencies');
+
+	try {
+		await execa(pkgManager, [...ADD_COMMAND.split(' ')], { cwd });
+		depsSpinner.stop('Added dependencies');
+	} catch (error) {
+		handleError(depsSpinner, error);
+	}
+
+	log.success('Stylelint is ready!');
+
+	note(
+		stripIndent(`
+			Lint your CSS files:
+
+			  ${pc.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
+
+			Customize your config:
+
+			- ${pc.underline(pc.cyan('https://stylelint.io/user-guide/customize'))}
+		`).trim(),
+		'Next steps:',
+	);
+
+	log.message(
+		stripIndent(`
+			${pc.dim('Support Stylelint:')}
+
+			${pc.dim(`- ${pc.underline(pc.cyan('https://github.com/sponsors/stylelint'))}`)}
+			${pc.dim(`- ${pc.underline(pc.cyan('https://opencollective.com/stylelint'))}`)}
+		`).trim(),
+	);
+
+	outro(pc.green('Done!'));
+}
 
 async function getExistingConfigInDirectory() {
 	const explorer = cosmiconfig('stylelint');
@@ -38,6 +129,19 @@ function directoryHasPackageJson(dir) {
 }
 
 /**
+ * @param {ReturnType<typeof spinner>} s
+ * @param {unknown} error
+ * @returns {never}
+ */
+function handleError(s, error) {
+	const message = error instanceof Error ? error.message : String(error);
+
+	s.error(message);
+	cancel('Canceled');
+	process.exit(1);
+}
+
+/**
  * @param {string} pkgManager
  * @return {string} The command
  */
@@ -51,158 +155,6 @@ function getExecuteCommand(pkgManager) {
 		case 'yarn':
 			return `${pkgManager} dlx`;
 		default:
-			throw new Error(`"${pkgManager}" package manager is not supported`);
+			throw new Error(`${pc.cyan(pkgManager)} package manager is not supported`);
 	}
-}
-
-/**
- * @param {string} errorMessage
- */
-function cancelSetup(errorMessage = '') {
-	console.error(
-		stripIndent(`
-			${pc.red(pc.bold('Setup canceled!'))}
-		`),
-	);
-
-	if (errorMessage) {
-		console.error(
-			stripIndent(`${errorMessage}
-			`),
-		);
-	}
-
-	process.exit(1);
-}
-
-/**
- * @param {string} pkgManager
- */
-async function showPrompt(pkgManager) {
-	console.info(
-		stripIndent(`
-			We'll create a ${pc.cyan(DEFAULT_CONFIG_FILE)} file containing:
-		`),
-	);
-
-	console.info(
-		pc.dim(
-			DEFAULT_CONFIG_CONTENT.split('\n')
-				.map((line) => `  ${line}`)
-				.join('\n'),
-		),
-	);
-
-	console.info(
-		stripIndent(`
-			Then add the related dependencies using:
-
-			  ${pc.dim(`${pkgManager} ${ADD_COMMAND}`)}
-		`),
-	);
-
-	let proceed;
-
-	try {
-		proceed = await confirm({
-			message: 'Continue?',
-		});
-	} catch (error) {
-		if (error instanceof Error && error.name === 'ExitPromptError') {
-			// silence
-		} else {
-			throw error;
-		}
-	}
-
-	if (!proceed) {
-		cancelSetup();
-	}
-}
-
-/**
- * @param {string} cwd
- * @param {string} pkgManager
- */
-async function createConfig(cwd, pkgManager) {
-	const spinner = ora('Creating config...').start();
-	const existingConfig = await getExistingConfigInDirectory();
-
-	if (existingConfig !== null) {
-		const basename = path.basename(existingConfig.filepath);
-		const failureMessage =
-			basename === 'package.json'
-				? 'A "stylelint" config in "package.json" already exists.'
-				: `A "${basename}" config already exists.`;
-
-		spinner.fail();
-		cancelSetup(`${failureMessage} Remove it and then try again.`);
-	}
-
-	if (!directoryHasPackageJson(cwd)) {
-		spinner.fail();
-		cancelSetup(`A "package.json" was not found. Run "${pkgManager} init" and then try again.`);
-	}
-
-	try {
-		fs.writeFileSync(DEFAULT_CONFIG_FILE, `${DEFAULT_CONFIG_CONTENT}\n`);
-	} catch (error) {
-		spinner.fail();
-		cancelSetup(error instanceof Error ? error.message : String(error));
-	}
-
-	spinner.succeed('Created config file');
-}
-
-/**
- * @param {string} cwd
- * @param {string} pkgManager
- */
-async function addDependencies(cwd, pkgManager) {
-	const spinner = ora('Adding dependencies...').start();
-
-	try {
-		await execa(pkgManager, [...ADD_COMMAND.split(' ')], {
-			cwd,
-		});
-	} catch (error) {
-		spinner.fail();
-		cancelSetup(error instanceof Error ? error.message : String(error));
-	}
-
-	spinner.succeed('Added dependencies');
-}
-
-/**
- * @param {string} pkgManager
- */
-function showNextSteps(pkgManager) {
-	console.info(
-		stripIndent(`
-			${pc.green(pc.bold('Setup complete!'))}
-
-			Lint your CSS files with:
-
-			  ${pc.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
-
-			Next steps? Customize your config: ${pc.underline(
-				pc.blue('https://stylelint.io/user-guide/customize'),
-			)}
-
-			If you benefit from Stylelint, please consider sponsoring the project at:
-
-			- ${pc.underline(pc.blue('https://github.com/sponsors/stylelint'))}
-			- ${pc.underline(pc.blue('https://opencollective.com/stylelint'))}
-		`),
-	);
-}
-
-export async function main() {
-	const pkgManager = whichPMRuns()?.name ?? 'npm';
-	const cwd = './';
-
-	await showPrompt(pkgManager);
-	await createConfig(cwd, pkgManager);
-	await addDependencies(cwd, pkgManager);
-	showNextSteps(pkgManager);
 }
