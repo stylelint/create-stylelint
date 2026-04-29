@@ -89,6 +89,18 @@ describe('create-stylelint', () => {
 		expect(setup(inputs.validEnv, projectRoot, [], 'yes\n')).toContain('Done!');
 	}, 15000);
 
+	it('should generate a valid config file', (context) => {
+		const projectRoot = getProjectRoot(context);
+
+		setup(inputs.validEnv, projectRoot, [], 'yes\n');
+
+		const configPath = path.join(projectRoot, inputs.validEnv, 'stylelint.config.mjs');
+		const content = fs.readFileSync(configPath, 'utf8');
+
+		expect(content).toContain('extends: ["stylelint-config-standard"]');
+		expect(() => execFileSync('node', ['--check', configPath], { encoding: 'utf8' })).not.toThrow();
+	}, 15000);
+
 	it('should succeed in a valid env with y prompt', (context) => {
 		const projectRoot = getProjectRoot(context);
 

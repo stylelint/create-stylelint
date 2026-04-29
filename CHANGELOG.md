@@ -1,5 +1,9 @@
 # Changelog
 
+## Head
+
+- Fixed: quoted `extends` property key in generated `stylelint.config.mjs`.
+
 ## 1.0.0
 
 - Changed: migrate to ECMAScript module.
