@@ -1,6 +1,6 @@
 {
   "name": "create-stylelint",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "The npm init script for Stylelint.",
   "keywords": [
     "stylelint",
