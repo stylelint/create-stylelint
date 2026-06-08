@@ -6,8 +6,8 @@ import process from 'node:process';
 
 import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@clack/prompts';
 import { cosmiconfig } from 'cosmiconfig';
-import { execa } from 'execa';
 import pc from 'picocolors';
+import { x } from 'tinyexec';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
 const DEFAULT_CONFIG_CONTENT = `/** @type {import("stylelint").Config} */
@@ -77,7 +77,14 @@ export async function main() {
 	depsSpinner.start('Adding dependencies');
 
 	try {
-		await execa(pkgManager, [...ADD_COMMAND.split(' ')], { cwd });
+		const { exitCode, stderr, stdout } = await x(pkgManager, ADD_COMMAND.split(' '), {
+			nodeOptions: { cwd },
+		});
+
+		if (exitCode !== 0) {
+			throw new Error(stderr || stdout);
+		}
+
 		depsSpinner.stop('Added dependencies');
 	} catch (error) {
 		handleError(depsSpinner, error);
