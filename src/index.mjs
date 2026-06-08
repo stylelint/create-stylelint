@@ -8,9 +8,6 @@ import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@cl
 import { cosmiconfig } from 'cosmiconfig';
 import { execa } from 'execa';
 import pc from 'picocolors';
-// @ts-expect-error - TS2595: 'whichPMRuns' can only be imported by using a default import.
-//                    Need to wait for a `@types/which-pm-runs` new version.
-import { whichPMRuns } from 'which-pm-runs';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
 const DEFAULT_CONFIG_CONTENT = `/** @type {import("stylelint").Config} */
@@ -21,7 +18,7 @@ export default {
 const ADD_COMMAND = 'add -D stylelint stylelint-config-standard';
 
 export async function main() {
-	const pkgManager = whichPMRuns()?.name ?? 'npm';
+	const pkgManager = detectPackageManager();
 	const cwd = './';
 
 	intro(pc.bgGreen(pc.white(' create-stylelint ')));
@@ -172,4 +169,15 @@ function stripIndent(string) {
 	if (commonIndent === 0) return string;
 
 	return string.replace(new RegExp(`^[ \\t]{${commonIndent}}`, 'gm'), '');
+}
+
+function detectPackageManager() {
+	const userAgent = process.env.npm_config_user_agent;
+
+	if (!userAgent) return 'npm';
+
+	const [spec = ''] = userAgent.split(' ');
+	const name = spec.substring(0, spec.lastIndexOf('/'));
+
+	return name === 'npminstall' ? 'cnpm' : name;
 }
