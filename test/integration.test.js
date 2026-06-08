@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { afterEach, beforeEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test'; // eslint-disable-line n/no-unsupported-features/node-builtins
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 
@@ -18,7 +18,7 @@ const inputs = {
 	validEnv: 'test/fixtures/valid-env',
 };
 
-const projectRoot = path.join(import.meta.dirname, '..');
+const projectRoot = path.join(import.meta.dirname, '..'); // eslint-disable-line n/no-unsupported-features/node-builtins
 const generatedFixtures = [inputs.failNpmInstall, inputs.validEnv];
 
 function assertIncludes(actual, expected) {
