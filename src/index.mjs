@@ -3,10 +3,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import process from 'node:process';
+import { styleText } from 'node:util';
 
 import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@clack/prompts';
 import { cosmiconfig } from 'cosmiconfig';
-import pc from 'picocolors';
 import { x } from 'tinyexec';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
@@ -21,11 +21,11 @@ export async function main() {
 	const pkgManager = detectPackageManager();
 	const cwd = './';
 
-	intro(pc.bgGreen(pc.white(' create-stylelint ')));
+	intro(styleText(['bgGreen', 'white'], ' create-stylelint '));
 
 	note(
 		stripIndent(`
-			Create a ${pc.cyan(DEFAULT_CONFIG_FILE)} file containing:
+			Create a ${styleText('cyan', DEFAULT_CONFIG_FILE)} file containing:
 
 			  ${DEFAULT_CONFIG_CONTENT.split('\n').join('\n\t\t\t  ')}
 
@@ -54,15 +54,15 @@ export async function main() {
 			const basename = path.basename(existingConfig.filepath);
 			const failureMessage =
 				basename === 'package.json'
-					? `A ${pc.cyan('stylelint')} entry in ${pc.cyan('package.json')} already exists.`
-					: `A ${pc.cyan(basename)} file already exists.`;
+					? `A ${styleText('cyan', 'stylelint')} entry in ${styleText('cyan', 'package.json')} already exists.`
+					: `A ${styleText('cyan', basename)} file already exists.`;
 
 			throw new Error(`${failureMessage} Remove it and then try again.`);
 		}
 
 		if (!directoryHasPackageJson(cwd)) {
 			throw new Error(
-				`A ${pc.cyan('package.json')} was not found. Run ${pc.cyan(`${pkgManager} init`)} and then try again.`,
+				`A ${styleText('cyan', 'package.json')} was not found. Run ${styleText('cyan', `${pkgManager} init`)} and then try again.`,
 			);
 		}
 
@@ -96,25 +96,25 @@ export async function main() {
 		stripIndent(`
 			Lint your CSS files:
 
-			  ${pc.dim(`${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
+			  ${styleText('dim', `${getExecuteCommand(pkgManager)} stylelint "**/*.css"`)}
 
 			Customize your config:
 
-			- ${pc.underline(pc.cyan('https://stylelint.io/user-guide/customize'))}
+			- ${styleText(['underline', 'cyan'], 'https://stylelint.io/user-guide/customize')}
 		`).trim(),
 		'Next steps:',
 	);
 
 	log.message(
 		stripIndent(`
-			${pc.dim('Support Stylelint:')}
+			${styleText('dim', 'Support Stylelint:')}
 
-			${pc.dim(`- ${pc.underline(pc.cyan('https://github.com/sponsors/stylelint'))}`)}
-			${pc.dim(`- ${pc.underline(pc.cyan('https://opencollective.com/stylelint'))}`)}
+			${styleText('dim', `- ${styleText(['underline', 'cyan'], 'https://github.com/sponsors/stylelint')}`)}
+			${styleText('dim', `- ${styleText(['underline', 'cyan'], 'https://opencollective.com/stylelint')}`)}
 		`).trim(),
 	);
 
-	outro(pc.green('Done!'));
+	outro(styleText('green', 'Done!'));
 }
 
 async function getExistingConfigInDirectory() {
@@ -158,7 +158,7 @@ function getExecuteCommand(pkgManager) {
 		case 'yarn':
 			return `${pkgManager} dlx`;
 		default:
-			throw new Error(`${pc.cyan(pkgManager)} package manager is not supported`);
+			throw new Error(`${styleText('cyan', pkgManager)} package manager is not supported`);
 	}
 }
 
