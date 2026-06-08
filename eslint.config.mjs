@@ -6,7 +6,12 @@ export default [
 	{
 		rules: {
 			// TODO: Remove when we drop support for Node.js 20
-			'n/no-unsupported-features/node-builtins': ['error', { ignores: ['util.styleText'] }],
+			'n/no-unsupported-features/node-builtins': [
+				'error',
+				{
+					ignores: ['util.styleText', 'test.describe', 'import.meta.dirname'],
+				},
+			],
 		},
 	},
 ];

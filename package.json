@@ -37,8 +37,8 @@
     "lint:packagejson": "npmPkgJsonLint .",
     "lint:types": "tsc",
     "pretest": "npm run lint",
-    "test": "vitest run",
-    "watch": "vitest watch"
+    "test": "node --test test/integration.test.js",
+    "watch": "node --test --watch test/integration.test.js"
   },
   "prettier": "@stylelint/prettier-config",
   "npmpackagejsonlint": {
@@ -65,13 +65,7 @@
     "npm-run-all2": "^9.0.1",
     "prettier": "^3.8.3",
     "remark-cli": "^12.0.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.7"
-  },
-  "optionalDependencies": {
-    "@rollup/rollup-darwin-x64": "*",
-    "@rollup/rollup-linux-x64-gnu": "*",
-    "@rollup/rollup-win32-x64-msvc": "*"
+    "typescript": "^6.0.3"
   },
   "engines": {
     "node": ">=20.19.0"
