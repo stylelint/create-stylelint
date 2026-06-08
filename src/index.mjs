@@ -3,7 +3,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import process from 'node:process';
-import { styleText } from 'node:util';
+import { styleText } from 'node:util'; // eslint-disable-line n/no-unsupported-features/node-builtins
 
 import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@clack/prompts';
 import { cosmiconfig } from 'cosmiconfig';
