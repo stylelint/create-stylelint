@@ -6,12 +6,8 @@ import process from 'node:process';
 
 import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@clack/prompts';
 import { cosmiconfig } from 'cosmiconfig';
-import { execa } from 'execa';
 import pc from 'picocolors';
-import stripIndent from 'strip-indent';
-// @ts-expect-error - TS2595: 'whichPMRuns' can only be imported by using a default import.
-//                    Need to wait for a `@types/which-pm-runs` new version.
-import { whichPMRuns } from 'which-pm-runs';
+import { x } from 'tinyexec';
 
 const DEFAULT_CONFIG_FILE = 'stylelint.config.mjs';
 const DEFAULT_CONFIG_CONTENT = `/** @type {import("stylelint").Config} */
@@ -22,7 +18,7 @@ export default {
 const ADD_COMMAND = 'add -D stylelint stylelint-config-standard';
 
 export async function main() {
-	const pkgManager = whichPMRuns()?.name ?? 'npm';
+	const pkgManager = detectPackageManager();
 	const cwd = './';
 
 	intro(pc.bgGreen(pc.white(' create-stylelint ')));
@@ -81,7 +77,14 @@ export async function main() {
 	depsSpinner.start('Adding dependencies');
 
 	try {
-		await execa(pkgManager, [...ADD_COMMAND.split(' ')], { cwd });
+		const { exitCode, stderr, stdout } = await x(pkgManager, ADD_COMMAND.split(' '), {
+			nodeOptions: { cwd },
+		});
+
+		if (exitCode !== 0) {
+			throw new Error(stderr || stdout);
+		}
+
 		depsSpinner.stop('Added dependencies');
 	} catch (error) {
 		handleError(depsSpinner, error);
@@ -157,4 +160,31 @@ function getExecuteCommand(pkgManager) {
 		default:
 			throw new Error(`${pc.cyan(pkgManager)} package manager is not supported`);
 	}
+}
+
+/**
+ * @param {string} string
+ * @return {string}
+ */
+function stripIndent(string) {
+	const indents = string.match(/^[ \t]*(?=\S)/gm);
+
+	if (!indents) return string;
+
+	const commonIndent = Math.min(...indents.map((indent) => indent.length));
+
+	if (commonIndent === 0) return string;
+
+	return string.replace(new RegExp(`^[ \\t]{${commonIndent}}`, 'gm'), '');
+}
+
+function detectPackageManager() {
+	const userAgent = process.env.npm_config_user_agent;
+
+	if (!userAgent) return 'npm';
+
+	const [spec = ''] = userAgent.split(' ');
+	const name = spec.substring(0, spec.lastIndexOf('/'));
+
+	return name === 'npminstall' ? 'cnpm' : name;
 }
