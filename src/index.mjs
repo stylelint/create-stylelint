@@ -8,7 +8,6 @@ import { cancel, confirm, intro, isCancel, log, note, outro, spinner } from '@cl
 import { cosmiconfig } from 'cosmiconfig';
 import { execa } from 'execa';
 import pc from 'picocolors';
-import stripIndent from 'strip-indent';
 // @ts-expect-error - TS2595: 'whichPMRuns' can only be imported by using a default import.
 //                    Need to wait for a `@types/which-pm-runs` new version.
 import { whichPMRuns } from 'which-pm-runs';
@@ -157,4 +156,20 @@ function getExecuteCommand(pkgManager) {
 		default:
 			throw new Error(`${pc.cyan(pkgManager)} package manager is not supported`);
 	}
+}
+
+/**
+ * @param {string} string
+ * @return {string}
+ */
+function stripIndent(string) {
+	const indents = string.match(/^[ \t]*(?=\S)/gm);
+
+	if (!indents) return string;
+
+	const commonIndent = Math.min(...indents.map((indent) => indent.length));
+
+	if (commonIndent === 0) return string;
+
+	return string.replace(new RegExp(`^[ \\t]{${commonIndent}}`, 'gm'), '');
 }
