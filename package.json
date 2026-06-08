@@ -52,19 +52,15 @@
   "dependencies": {
     "@clack/prompts": "^1.4.0",
     "cosmiconfig": "^9.0.1",
-    "execa": "^9.6.1",
     "picocolors": "^1.1.1",
     "semver": "^7.8.1",
-    "strip-indent": "^4.1.0",
-    "tinyexec": "^1.2.4",
-    "which-pm-runs": "^2.0.0"
+    "tinyexec": "^1.2.4"
   },
   "devDependencies": {
     "@stylelint/npm-package-json-lint-config": "^5.1.0",
     "@stylelint/prettier-config": "^4.0.0",
     "@stylelint/remark-preset": "^5.1.1",
     "@types/node": "^25.9.1",
-    "@types/which-pm-runs": "^1.0.2",
     "eslint": "^10.4.0",
     "eslint-config-stylelint": "^27.0.0",
     "npm-run-all2": "^9.0.1",
