@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { afterEach, beforeEach, describe, it } from 'node:test'; // eslint-disable-line n/no-unsupported-features/node-builtins
+import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const inputs = {
 	failNpmInstall: 'test/fixtures/fail-npm-install',
@@ -18,11 +18,17 @@ const inputs = {
 	validEnv: 'test/fixtures/valid-env',
 };
 
-function getProjectRoot(context) {
-	return context.task.file.filepath.replace(context.task.file.name, '');
+const projectRoot = path.join(import.meta.dirname, '..'); // eslint-disable-line n/no-unsupported-features/node-builtins
+const generatedFixtures = [inputs.failNpmInstall, inputs.validEnv];
+
+function assertIncludes(actual, expected) {
+	assert.ok(
+		actual.includes(expected),
+		`Expected output to include ${JSON.stringify(expected)}.\nReceived:\n${actual}`,
+	);
 }
 
-function setup(pathToTest, projectRoot, args = [], input = null) {
+function setup(pathToTest, args = [], input = null) {
 	return execFileSync('node', [path.join(projectRoot, 'create-stylelint.mjs'), ...args], {
 		cwd: path.join(projectRoot, pathToTest),
 		input: input !== null ? input : undefined,
@@ -31,7 +37,7 @@ function setup(pathToTest, projectRoot, args = [], input = null) {
 	});
 }
 
-function setupError(pathToTest, projectRoot, args = [], input = null) {
+function setupError(pathToTest, args = [], input = null) {
 	try {
 		execFileSync('node', [path.join(projectRoot, 'create-stylelint.mjs'), ...args], {
 			cwd: path.join(projectRoot, pathToTest),
@@ -45,126 +51,88 @@ function setupError(pathToTest, projectRoot, args = [], input = null) {
 	}
 }
 
-function backupFiles(root) {
-	const pathsToBackup = [inputs.failNpmInstall, inputs.validEnv];
-
-	for (const pathToTest of pathsToBackup) {
+function backupFiles() {
+	for (const pathToTest of generatedFixtures) {
 		fs.copyFileSync(
-			path.join(root, pathToTest, 'package.json'),
-			path.join(root, pathToTest, 'package.json.bak'),
+			path.join(projectRoot, pathToTest, 'package.json'),
+			path.join(projectRoot, pathToTest, 'package.json.bak'),
 		);
 	}
 }
 
-function cleanupGenFiles(root) {
-	const pathsToCleanup = [inputs.failNpmInstall, inputs.validEnv];
-
-	for (const pathToTest of pathsToCleanup) {
+function cleanupGenFiles() {
+	for (const pathToTest of generatedFixtures) {
 		for (const file of ['stylelint.config.mjs', 'package-lock.json', 'node_modules']) {
-			fs.rmSync(path.join(root, pathToTest, file), {
+			fs.rmSync(path.join(projectRoot, pathToTest, file), {
 				recursive: true,
 				force: true,
 			});
 		}
 
 		fs.renameSync(
-			path.join(root, pathToTest, 'package.json.bak'),
-			path.join(root, pathToTest, 'package.json'),
+			path.join(projectRoot, pathToTest, 'package.json.bak'),
+			path.join(projectRoot, pathToTest, 'package.json'),
 		);
 	}
 }
 
+beforeEach(backupFiles);
+afterEach(cleanupGenFiles);
+
 describe('create-stylelint', () => {
-	beforeEach((context) => {
-		backupFiles(getProjectRoot(context));
+	it('should succeed in a valid env with yes prompt', { timeout: 15000 }, () => {
+		assertIncludes(setup(inputs.validEnv, [], 'yes\n'), 'Done!');
 	});
 
-	afterEach((context) => {
-		cleanupGenFiles(getProjectRoot(context));
-	});
-
-	it('should succeed in a valid env with yes prompt', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(setup(inputs.validEnv, projectRoot, [], 'yes\n')).toContain('Done!');
-	}, 15000);
-
-	it('should generate a valid config file', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		setup(inputs.validEnv, projectRoot, [], 'yes\n');
+	it('should generate a valid config file', { timeout: 15000 }, () => {
+		setup(inputs.validEnv, [], 'yes\n');
 
 		const configPath = path.join(projectRoot, inputs.validEnv, 'stylelint.config.mjs');
 		const content = fs.readFileSync(configPath, 'utf8');
 
-		expect(content).toContain('extends: ["stylelint-config-standard"]');
-		expect(() => execFileSync('node', ['--check', configPath], { encoding: 'utf8' })).not.toThrow();
-	}, 15000);
+		assertIncludes(content, 'extends: ["stylelint-config-standard"]');
 
-	it('should succeed in a valid env with y prompt', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(setup(inputs.validEnv, projectRoot, [], 'y\n')).toContain('Done!');
-	}, 15000);
-
-	it("should cancel setup if user chooses 'no' at confirmation", (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(setup(inputs.validEnv, projectRoot, [], 'no\n')).toContain('Canceled');
+		execFileSync('node', ['--check', configPath], { encoding: 'utf8' });
 	});
 
-	it('should not proceed if no package.json exists', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(setupError(inputs.noPackageJson, projectRoot, [], 'yes\n')).toContain('was not found');
+	it('should succeed in a valid env with y prompt', { timeout: 15000 }, () => {
+		assertIncludes(setup(inputs.validEnv, [], 'y\n'), 'Done!');
 	});
 
-	it('should not proceed if the stylelint field exists in package.json', (context) => {
-		const projectRoot = getProjectRoot(context);
+	it("should cancel setup if user chooses 'no' at confirmation", () => {
+		assertIncludes(setup(inputs.validEnv, [], 'no\n'), 'Canceled');
+	});
 
-		expect(setupError(inputs.stylelintConfigExistsPackageJson, projectRoot, [], 'yes\n')).toContain(
+	it('should not proceed if no package.json exists', () => {
+		assertIncludes(setupError(inputs.noPackageJson, [], 'yes\n'), 'was not found');
+	});
+
+	it('should not proceed if the stylelint field exists in package.json', () => {
+		assertIncludes(
+			setupError(inputs.stylelintConfigExistsPackageJson, [], 'yes\n'),
 			'already exists.',
 		);
 	});
 
-	it('should error if npm install fails', (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(setupError(inputs.failNpmInstall, projectRoot, [], 'yes\n')).toContain(
-			'npm error code ETARGET',
-		);
-	}, 15000);
+	it('should error if npm install fails', { timeout: 15000 }, () => {
+		assertIncludes(setupError(inputs.failNpmInstall, [], 'yes\n'), 'npm error code ETARGET');
+	});
 });
 
-describe.each([
+const configExistsCases = [
 	{ file: '.stylelintrc', fixture: inputs.stylelintConfigExistsRc },
 	{ file: '.stylelintrc.cjs', fixture: inputs.stylelintConfigExistsRcCjs },
 	{ file: '.stylelintrc.json', fixture: inputs.stylelintConfigExistsRcJson },
 	{ file: '.stylelintrc.yaml', fixture: inputs.stylelintConfigExistsRcYaml },
-	{
-		file: 'stylelint.config.cjs',
-		fixture: inputs.stylelintConfigExistsConfigCjs,
-	},
-	{
-		file: 'stylelint.config.mjs',
-		fixture: inputs.stylelintConfigExistsConfigMjs,
-	},
-	{
-		file: '.config/stylelintrc.json',
-		fixture: inputs.stylelintConfigExistsSubdirRcJson,
-	},
-])('create-stylelint in a directory with $file', ({ file, fixture }) => {
-	beforeEach((context) => {
-		backupFiles(getProjectRoot(context));
-	});
+	{ file: 'stylelint.config.cjs', fixture: inputs.stylelintConfigExistsConfigCjs },
+	{ file: 'stylelint.config.mjs', fixture: inputs.stylelintConfigExistsConfigMjs },
+	{ file: '.config/stylelintrc.json', fixture: inputs.stylelintConfigExistsSubdirRcJson },
+];
 
-	afterEach((context) => {
-		cleanupGenFiles(getProjectRoot(context));
+for (const { file, fixture } of configExistsCases) {
+	describe(`create-stylelint in a directory with ${file}`, () => {
+		it(`should not proceed, since a stylelint configuration already exists at ${file}`, () => {
+			assertIncludes(setupError(fixture, [], 'yes\n'), 'already exists.');
+		});
 	});
-
-	it(`should not proceed, since a stylelint configuration already exists at ${file}`, (context) => {
-		const projectRoot = getProjectRoot(context);
-
-		expect(setupError(fixture, projectRoot, [], 'yes\n')).toContain('already exists.');
-	});
-});
+}
