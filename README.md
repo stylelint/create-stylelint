@@ -1,7 +1,7 @@
 # create-stylelint
 
 [![npm version](https://img.shields.io/npm/v/create-stylelint)](https://www.npmjs.com/package/create-stylelint)
-[![Testing](https://github.com/stylelint/create-stylelint/actions/workflows/testing.yml/badge.svg)](https://github.com/stylelint/create-stylelint/actions/workflows/testing.yml)
+[![CI](https://github.com/stylelint/stylelint-create/actions/workflows/ci.yml/badge.svg)](https://github.com/stylelint/stylelint-create/actions/workflows/ci.yml)
 
 The [`create`](https://docs.npmjs.com/cli/commands/npm-init) script for [Stylelint](https://github.com/stylelint/stylelint).
 
