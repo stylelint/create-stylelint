@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- Fixed: unnecessary dependencies.
+
 ## 1.0.1
 
 - Fixed: quoted `extends` property key in generated `stylelint.config.mjs`.
