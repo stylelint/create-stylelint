@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.0
+
+- Removed: support for end-of-life and older versions of Node.js.
+- Changed: bump `cosmiconfig` to v10 to align with Stylelint v18.
+
 ## 1.0.2
 
 - Fixed: unnecessary dependencies.
